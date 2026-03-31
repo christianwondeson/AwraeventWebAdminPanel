@@ -1,0 +1,28 @@
+.DS_Store
+Thumbs.db
+
+# IDE/editor
+.vscode/
+.idea/
+
+# OS / temp
+*.swp
+*.swo
+*.tmp
+*.temp
+
+# Logs
+*.log
+logs/
+
+# PHP / Composer
+vendor/
+composer.phar
+
+# Env / secrets
+.env
+.env.*
+
+# Build / dist (keep if you need it)
+# dist/
+
