@@ -10,6 +10,7 @@ if(isset($_GET['amt']))
  * @return string
  */
 require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
+require_once dirname( dirname(__FILE__) ).'/include/brand.php';
 $kb = $event->query("SELECT * FROM `tbl_payment_list` where id=12")->fetch_assoc();
 $kk = explode(',',$kb['attributes']);
 $mode = $kk[2];
@@ -36,9 +37,9 @@ $data = array(
     // Merchant details
     'merchant_id' => $kk[1],
     'merchant_key' => $kk[0],
-    'return_url' => 'https://goevent.zozostudio.tech/Payfast/success.php?payment_id='.$payment_id.'&status=success',
-    'cancel_url' => 'https://goevent.zozostudio.tech/Payfast/cancle.php?payment_id='.$payment_id.'&status=failed',
-    'notify_url' => 'https://goevent.zozostudio.tech/Payfast/success.php?payment_id='.$payment_id.'&status=success',
+    'return_url' => awraevent_public_base_url() . '/Payfast/success.php?payment_id='.$payment_id.'&status=success',
+    'cancel_url' => awraevent_public_base_url() . '/Payfast/cancle.php?payment_id='.$payment_id.'&status=failed',
+    'notify_url' => awraevent_public_base_url() . '/Payfast/success.php?payment_id='.$payment_id.'&status=success',
     // Buyer details
     'name_first' => 'First Name',
     'name_last'  => 'Last Name',

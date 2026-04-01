@@ -2,6 +2,7 @@
 if(isset($_GET['amt']))
 {
 require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
+require_once dirname( dirname(__FILE__) ).'/include/brand.php';
 $kb = $event->query("SELECT * FROM `tbl_payment_list` where id=15")->fetch_assoc();
 $kk = explode(',',$kb['attributes']);
 $liveurl = 'https://khalti.com/api/v2/';
@@ -15,6 +16,7 @@ else
 	$api_url = $liveurl . 'epayment/initiate/';
 }
 $amt = $_GET['amt'] * 100;
+$khaltiBase = awraevent_public_base_url();
     $curl = curl_init();
     curl_setopt_array($curl, array(
     CURLOPT_URL => $api_url,
@@ -26,7 +28,7 @@ $amt = $_GET['amt'] * 100;
     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
     CURLOPT_CUSTOMREQUEST => 'POST',
     CURLOPT_POSTFIELDS =>'{
-    "return_url": "https://goevent.zozostudio.tech/Khalti/return.php",
+    "return_url": "'.$khaltiBase.'/Khalti/return.php",
     "website_url": "https://example.com/",
     "amount": '.$amt.',
     "purchase_order_id": "Order01",

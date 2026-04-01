@@ -1,5 +1,6 @@
 <?php 
 require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
+require_once dirname( dirname(__FILE__) ).'/include/brand.php';
 $data = json_decode(file_get_contents('php://input'), true);
 header('Content-type: text/json');
 $kb = $event->query("SELECT * FROM `tbl_payment_list` where id=6")->fetch_assoc();
@@ -17,7 +18,7 @@ $email = $data['email'];
 $amount = $data['amount'] * 100;  //the amount in kobo. This value is actually NGN 300
 
 // url to go to after payment
-$callback_url = 'https://goevent.zozostudio.tech/paystack/callback.php';  
+$callback_url = awraevent_public_base_url() . '/paystack/callback.php';  
 
 $url = "https://api.paystack.co/transaction/initialize";
   $fields = [

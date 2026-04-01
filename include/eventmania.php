@@ -1,5 +1,7 @@
 <?php 
 require 'eventconfig.php';
+require_once __DIR__ . '/brand.php';
+awraevent_normalize_webname($set);
 $GLOBALS['event'] = $event;
 class Eventmania {
  

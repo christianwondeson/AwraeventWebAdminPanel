@@ -2,6 +2,7 @@
 if(isset($_GET['amt']))
 {
 require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
+require_once dirname( dirname(__FILE__) ).'/include/brand.php';
 $kb = $event->query("SELECT * FROM `tbl_payment_list` where id=11")->fetch_assoc();
 $kk = explode(',',$kb['attributes']);
 $endpoint = 'https://api.mercadopago.com/checkout/preferences';
@@ -35,14 +36,14 @@ $data = array(
         'default_installments' => null
     ),
 	'back_urls'=>array(
-	'success'=>'https://goevent.zozostudio.tech/merpago/success.php',
-	'failure'=>'https://goevent.zozostudio.tech/merpago/success.php',
-	'pending'=>'https://goevent.zozostudio.tech/merpago/pending.php'
+	'success'=> awraevent_public_base_url() . '/merpago/success.php',
+	'failure'=> awraevent_public_base_url() . '/merpago/success.php',
+	'pending'=> awraevent_public_base_url() . '/merpago/pending.php'
 	),
 	'redirect_urls'=>array(
-	'success'=>'https://goevent.zozostudio.tech/merpago/success.php',
-	'failure'=>'https://goevent.zozostudio.tech/merpago/success.php',
-	'pending'=>'https://goevent.zozostudio.tech/merpago/pending.php'
+	'success'=> awraevent_public_base_url() . '/merpago/success.php',
+	'failure'=> awraevent_public_base_url() . '/merpago/success.php',
+	'pending'=> awraevent_public_base_url() . '/merpago/pending.php'
 	),
 	'auto_return'=>'approved',
     'shipments' => array(

@@ -1,5 +1,6 @@
 <?php 
 require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
+require_once dirname( dirname(__FILE__) ).'/include/brand.php';
 $kb = $event->query("SELECT * FROM `tbl_payment_list` where id=7")->fetch_assoc();
 $kk = explode(',',$kb['attributes']);
 if(isset($_POST['email']))
@@ -13,7 +14,7 @@ if(isset($_POST['email']))
         'amount' => $amount,
         'currency' => 'NGN',
         'payment_options' => 'card',
-        'redirect_url' => 'https://goevent.zozostudio.tech/flutterwave/process.php',
+        'redirect_url' => awraevent_public_base_url() . '/flutterwave/process.php',
         'customer' => [
             'email' => $email,
             'name' => 'Zubdev'

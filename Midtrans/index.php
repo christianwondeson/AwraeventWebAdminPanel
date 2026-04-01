@@ -2,6 +2,7 @@
 if(isset($_GET['name']) && isset($_GET['email']) && isset($_GET['phone']) && isset($_GET['amt']))
 {
 require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
+require_once dirname( dirname(__FILE__) ).'/include/brand.php';
 $kb = $event->query("SELECT * FROM `tbl_payment_list` where id=13")->fetch_assoc();
 $kk = explode(',',$kb['attributes']);
 $liveurl = 'https://app.midtrans.com/snap/v1/transactions';
@@ -32,7 +33,7 @@ $data = array(
         'phone' => $_GET['phone']
     ),
 	'callbacks' => array(
-	    'finish'=> 'https://goevent.zozostudio.tech/Midtrans/process.php'
+	    'finish'=> awraevent_public_base_url() . '/Midtrans/process.php'
 	)
 );
 
