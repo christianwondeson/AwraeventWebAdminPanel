@@ -1,0 +1,63 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: ["master"]
+
+concurrency:
+  group: deploy-master
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Deploy over SSH (git pull on server)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            APP_DIR="${{ secrets.VPS_APP_DIR }}"
+            BRANCH="master"
+
+            if [ -z "$APP_DIR" ]; then
+              echo "VPS_APP_DIR secret is required (e.g. /var/www/awraevents)"
+              exit 1
+            fi
+
+            cd "$APP_DIR"
+
+            # Make sure origin exists and points to GitHub
+            git remote -v
+
+            # Deploy exact remote state
+            git fetch --prune origin
+            git reset --hard "origin/${BRANCH}"
+
+            # Optional: composer install (only if a composer.json exists at project root)
+            if [ -f composer.json ]; then
+              if command -v composer >/dev/null 2>&1; then
+                composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
+              else
+                echo "composer.json found but composer not installed on server; skipping."
+              fi
+            fi
+
+            # Optional: reload PHP-FPM if available (non-fatal)
+            if command -v systemctl >/dev/null 2>&1; then
+              systemctl reload php8.2-fpm 2>/dev/null || true
+              systemctl reload php8.1-fpm 2>/dev/null || true
+              systemctl reload php8.0-fpm 2>/dev/null || true
+            fi
+
