@@ -1,6 +1,12 @@
 <?php 
 include 'include/eventconfig.php';
 include 'include/eventmania.php';
+
+if (function_exists('awraevent_skip_envato_footer_script') && awraevent_skip_envato_footer_script()) {
+	header('Location: index.php', true, 302);
+	exit;
+}
+
 if(isset($_SESSION['eventname']))
 {
 	?>

@@ -27,6 +27,7 @@ composer.phar
 
 # App secrets / local-only config
 /include/eventconfig.php
+/include/awraevent_runtime.php
 
 # Android / Flutter-ish (if present)
 local.properties

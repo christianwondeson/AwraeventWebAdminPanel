@@ -2,6 +2,11 @@
 /**
  * Copy to eventconfig.php and adjust credentials (eventconfig.php is gitignored).
  */
+$__awraevent_runtime = __DIR__ . '/awraevent_runtime.php';
+if (is_readable($__awraevent_runtime)) {
+  require $__awraevent_runtime;
+}
+
 if (session_status() == PHP_SESSION_NONE) {
   session_start();
 }
