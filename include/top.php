@@ -1,6 +1,6 @@
 <?php 
-include 'eventconfig.php';
-include 'eventmania.php';
+require_once __DIR__ . '/eventconfig.php';
+require_once __DIR__ . '/eventmania.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -98,7 +98,7 @@ include 'eventmania.php';
 										<span class="fs-16 font-w600 ">Admin</span>
 										<small class="text-end fs-14 font-w400">Super Admin</small>
 									</div>
-                                    <img src="images/profile/pic1.jpg" width="20" alt=""/>
+                                    <img src="images/profile/pic1.svg" width="20" height="20" alt=""/>
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end">
                                     <a href="profile.php" class="dropdown-item ai-icon">

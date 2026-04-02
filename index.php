@@ -1,6 +1,20 @@
 <?php 
-include 'include/eventconfig.php';
-include 'include/eventmania.php';
+require_once __DIR__ . '/include/eventmania.php';
+
+$login_error = false;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['type']) && $_POST['type'] === 'login') {
+	$username = isset($_POST['username']) ? trim((string) $_POST['username']) : '';
+	$password = isset($_POST['password']) ? (string) $_POST['password'] : '';
+	$h = new Eventmania();
+	$count = $h->eventlogin($username, $password, 'admin');
+	if ($count != 0) {
+		$_SESSION['eventname'] = $username;
+		header('Location: dashboard.php', true, 302);
+		exit;
+	}
+	$login_error = true;
+}
+
 if(isset($_SESSION['eventname']))
 {
 	?>
@@ -42,7 +56,10 @@ else
 										<img src="<?php echo $set['weblogo'];?>" width="120px" alt="">
 									</div>
                                     <h4 class="text-center mb-4">Sign in your account</h4>
-                                    <form method="post">
+									<?php if (!empty($login_error)) { ?>
+									<div class="alert alert-danger text-center" role="alert">Invalid username or password.</div>
+									<?php } ?>
+                                    <form method="post" action="">
                                         <div class="mb-3">
                                             <label class="mb-1"><strong>User Name</strong></label>
                                             <input type="text" class="form-control" name="username" required>

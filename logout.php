@@ -3,5 +3,5 @@ session_start();
 session_destroy();
 ?>
 <script>
-window.location.href="/event/index.php";
+window.location.href="index.php";
 </script>

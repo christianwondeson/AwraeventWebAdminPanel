@@ -7,7 +7,7 @@ else
 {
 	?>
 	<script>
-	window.location.href="/";
+	window.location.href="index.php";
 	</script>
 	<?php 
 }
