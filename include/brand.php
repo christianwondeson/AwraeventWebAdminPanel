@@ -46,6 +46,17 @@ if (!function_exists('awraevent_force_domain_script')) {
   }
 }
 
+if (!function_exists('awraevent_skip_envato_footer_script')) {
+  /**
+   * When true, footer.php will not echo tbl_validate.data (Codecanyon/Envato domain + purchase-code UI).
+   * Set AWRAEVENT_SKIP_ENVATO_SCRIPT=1 in PHP-FPM / server env after you have licensed the product.
+   * Alternatively clear tbl_validate.data in MySQL to the same effect.
+   */
+  function awraevent_skip_envato_footer_script(): bool {
+    return getenv('AWRAEVENT_SKIP_ENVATO_SCRIPT') === '1';
+  }
+}
+
 if (!function_exists('awraevent_is_local_request')) {
   function awraevent_is_local_request() {
     if (awraevent_force_domain_script()) {
