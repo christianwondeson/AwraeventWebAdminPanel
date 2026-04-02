@@ -16,7 +16,9 @@ Thumbs.db
 logs/
 
 # PHP / Composer
-vendor/
+# Do NOT ignore /vendor/: this admin theme ships JS/CSS under vendor/ (global.min.js, bootstrap, etc.).
+# Composer-only deps live in subfolders (e.g. stripe/stripe-php/). If you add root composer.json later,
+# ignore only: /vendor/composer/ and /vendor/autoload.php (or use a separate directory for PHP packages).
 composer.phar
 
 # Env / secrets

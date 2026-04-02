@@ -17,19 +17,19 @@ require_once __DIR__ . '/eventmania.php';
 	<link rel="shortcut icon" type="image/png" href="<?php echo $set['weblogo'];?>" />
 	
 	
-	<link href="vendor/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
-	<link href="vendor/jquery-nice-select/css/nice-select.css" rel="stylesheet">
-	<link href="vendor/datatables/css/jquery.dataTables.min.css" rel="stylesheet">
-	<link rel="stylesheet" href="vendor/pickadate/themes/default.css">
-	 <link href="vendor/bootstrap-tagsinput/bootstrap-tagsinput.css" rel="stylesheet" type="text/css">
-	  <link href="vendor/select2/select2.min.css" rel="stylesheet" type="text/css">
-	  <link href="vendor/summernote/summernote-bs4.css" rel="stylesheet">
-	  <link href="vendor/summernote/summernote.css" rel="stylesheet">
-    <link rel="stylesheet" href="vendor/pickadate/themes/default.date.css">
-	    <link href="vendor/clockpicker/css/bootstrap-clockpicker.min.css" rel="stylesheet">
+	<link href="<?php echo awraevent_asset_h('vendor/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css'); ?>" rel="stylesheet">
+	<link href="<?php echo awraevent_asset_h('vendor/jquery-nice-select/css/nice-select.css'); ?>" rel="stylesheet">
+	<link href="<?php echo awraevent_asset_h('vendor/datatables/css/jquery.dataTables.min.css'); ?>" rel="stylesheet">
+	<link rel="stylesheet" href="<?php echo awraevent_asset_h('vendor/pickadate/themes/default.css'); ?>">
+	 <link href="<?php echo awraevent_asset_h('vendor/bootstrap-tagsinput/bootstrap-tagsinput.css'); ?>" rel="stylesheet" type="text/css">
+	  <link href="<?php echo awraevent_asset_h('vendor/select2/select2.min.css'); ?>" rel="stylesheet" type="text/css">
+	  <link href="<?php echo awraevent_asset_h('vendor/summernote/summernote-bs4.css'); ?>" rel="stylesheet">
+	  <link href="<?php echo awraevent_asset_h('vendor/summernote/summernote.css'); ?>" rel="stylesheet">
+    <link rel="stylesheet" href="<?php echo awraevent_asset_h('vendor/pickadate/themes/default.date.css'); ?>">
+	    <link href="<?php echo awraevent_asset_h('vendor/clockpicker/css/bootstrap-clockpicker.min.css'); ?>" rel="stylesheet">
 	
 	<!-- Style css -->
-    <link href="css/style.css" rel="stylesheet">
+    <link href="<?php echo awraevent_asset_h('css/style.css'); ?>" rel="stylesheet">
 	
 </head>
 <body>

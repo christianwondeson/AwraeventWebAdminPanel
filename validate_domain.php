@@ -25,7 +25,7 @@ else
 	
 	<!-- FAVICONS ICON -->
 	<link rel="shortcut icon" type="image/png" href="<?php echo $set['weblogo'];?>" />
-    <link href="css/style.css" rel="stylesheet">
+    <link href="<?php echo awraevent_asset_h('css/style.css'); ?>" rel="stylesheet">
 
 </head>
 
