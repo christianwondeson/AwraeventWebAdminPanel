@@ -43,25 +43,36 @@ include 'include/sidebar.php';
                                         </div>
 										
 										<div class="form-group col-3">
-									<label for="cname">Select Timezone</label>
-									<select name="timezone" class="form-control" required>
-									<option value="">Select Timezone</option>
-									<?php 
+									<label for="awra-timezone">Timezone</label>
+									<select name="timezone" id="awra-timezone" class="form-control" required>
+									<option value="">Select timezone</option>
+									<?php
+								$tzPreferred = awraevent_default_timezone();
 								$tzlist = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
-								$limit =  count($tzlist);
-								?>
-									<?php 
-									for($k=0;$k<$limit;$k++)
-									{
+								$tzlist = array_values(array_unique(array_merge(
+									array($tzPreferred),
+									array_values(array_filter($tzlist, static function ($z) use ($tzPreferred) {
+										return $z !== $tzPreferred;
+									}))
+								)));
+								$limit = count($tzlist);
+								for ($k = 0; $k < $limit; $k++) {
+									$z = $tzlist[$k];
 									?>
-									<option <?php echo $tzlist[$k];?> <?php if($tzlist[$k] == $set['timezone']) {echo 'selected';}?>><?php echo $tzlist[$k];?></option>
-									<?php } ?>
+									<option value="<?php echo htmlspecialchars($z, ENT_QUOTES, 'UTF-8'); ?>" <?php if ($z === $set['timezone']) {
+										echo 'selected';
+									} ?>><?php echo htmlspecialchars($z, ENT_QUOTES, 'UTF-8'); ?></option>
+									<?php
+								}
+									?>
 									</select>
+									<small class="text-muted">Default for Ethiopia: <?php echo htmlspecialchars(awraevent_default_timezone(), ENT_QUOTES, 'UTF-8'); ?></small>
 								</div>
 										
 										<div class="form-group col-3">
                                             <label><span class="text-danger">*</span> Currency</label>
-                                            <input type="text" class="form-control" placeholder="Enter Currency"  value="<?php echo $set['currency'];?>" name="currency" required="">
+                                            <input type="text" class="form-control" placeholder="ETB (Ethiopian Birr)"  value="<?php echo htmlspecialchars($set['currency'], ENT_QUOTES, 'UTF-8'); ?>" name="currency" required="" maxlength="12">
+											<small class="text-muted">Use <strong>ETB</strong> for Ethiopian Birr (displayed in the app).</small>
                                         </div>
 										
 										

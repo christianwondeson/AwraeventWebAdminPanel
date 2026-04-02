@@ -490,10 +490,14 @@ $h = new Eventmania();
 else if($_POST['type'] == 'edit_setting')
 {
 $webname = mysqli_real_escape_string($event,$_POST['webname']);
-			$timezone = $_POST['timezone'];
-			$currency = $_POST['currency'];
+			$timezone = awraevent_sanitize_timezone((string) ($_POST['timezone'] ?? ''));
+			$currencyRaw = trim((string) ($_POST['currency'] ?? ''));
+			if ($currencyRaw === '') {
+				$currencyRaw = awraevent_default_currency();
+			}
+			$currency = mysqli_real_escape_string($event, $currencyRaw);
 			
-			$id = $_POST['id'];
+			$id = (int) ($_POST['id'] ?? 0);
 			$sms_type = $_POST['sms_type'];
 			$auth_key = $_POST['auth_key'];
 			$otp_id = $_POST['otp_id'];
@@ -530,7 +534,7 @@ if($_FILES["weblogo"]["name"] != '')
 					'sms_type'=>$sms_type);
   $where = "where id=".$id."";
 $h = new Eventmania();
-	  $check = $h->eventupdateData($field,$table,$where);
+	  $check = $id > 0 ? $h->eventupdateData($field,$table,$where) : 0;
   
 	  if($check == 1)
 {
@@ -550,7 +554,7 @@ else
 					'sms_type'=>$sms_type);
   $where = "where id=".$id."";
 $h = new Eventmania();
-	  $check = $h->eventupdateData($field,$table,$where);
+	  $check = $id > 0 ? $h->eventupdateData($field,$table,$where) : 0;
 	  if($check == 1)
 {
 	$returnArr = array("ResponseCode"=>"200","Result"=>"true","title"=>"Setting Update Successfully!!","message"=>"Offer section!","action"=>"setting.php");
@@ -584,8 +588,8 @@ else if($_POST['type'] == 'add_events')
 	$stime = $_POST['stime'];
 	$etime = $_POST['etime'];
 	$cid = $_POST['cid'];
-	$latitude = $_POST['latitude'];
-	$longtitude = $_POST['longtitude'];
+	$latitude = $event->real_escape_string(awraevent_sanitize_latlng($_POST['latitude'] ?? '', true));
+	$longtitude = $event->real_escape_string(awraevent_sanitize_latlng($_POST['longtitude'] ?? '', false));
 	
 	$target_dir = dirname( dirname(__FILE__) )."/images/event/";
 			$url = "images/event/";
@@ -619,7 +623,7 @@ $h = new Eventmania();
 else if($_POST['type'] == 'edit_event')
 {
 	$title = $event->real_escape_string($_POST['title']);
-	$id = $_POST['id'];
+	$id = (int) ($_POST['id'] ?? 0);
 	$address = $event->real_escape_string($_POST['address']);
 	$description = $event->real_escape_string($_POST['cdesc']);
 	$disclaimer = $event->real_escape_string($_POST['disclaimer']);
@@ -629,8 +633,8 @@ else if($_POST['type'] == 'edit_event')
 	$stime = $_POST['stime'];
 	$etime = $_POST['etime'];
 	$cid = $_POST['cid'];
-	$latitude = $_POST['latitude'];
-	$longtitude = $_POST['longtitude'];
+	$latitude = $event->real_escape_string(awraevent_sanitize_latlng($_POST['latitude'] ?? '', true));
+	$longtitude = $event->real_escape_string(awraevent_sanitize_latlng($_POST['longtitude'] ?? '', false));
 	
 	$target_dir = dirname( dirname(__FILE__) )."/images/event/";
 			$url = "images/event/";
