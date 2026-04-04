@@ -1,6 +1,17 @@
 <?php 
-require 'eventconfig.php';
-require 'eventmania.php';
+require_once __DIR__ . '/eventconfig.php';
+require_once __DIR__ . '/eventmania.php';
+
+header('Content-Type: application/json; charset=utf-8');
+
+$returnArr = array(
+	'ResponseCode' => '200',
+	'Result' => 'false',
+	'title' => 'Invalid request',
+	'message' => 'Unknown or missing action type.',
+	'action' => 'dashboard.php',
+);
+
 if(isset($_POST['type']))
 {
 	if($_POST['type'] == 'login')
@@ -43,9 +54,9 @@ $h = new Eventmania();
 }
 else if($_POST['type'] == 'update_status')
 {
-	$id = $_POST['id'];
-	$status = $_POST['status'];
-	$coll_type = $_POST['coll_type'];
+	$id = (int) ($_POST['id'] ?? 0);
+	$status = isset($_POST['status']) ? (int) $_POST['status'] : 0;
+	$coll_type = isset($_POST['coll_type']) ? preg_replace('/[^a-zA-Z0-9_]/', '', (string) $_POST['coll_type']) : '';
 	
 	if($coll_type == 'user')
 	{
@@ -1004,5 +1015,5 @@ $h = new Eventmania();
 }
 	
 }
+
 echo json_encode($returnArr);
-?>

@@ -56,8 +56,8 @@ else
 		$wallet = $event->query("select * from tbl_setting")->fetch_assoc();
 		$fin = $wallet['scredit'];
 		$table="tbl_user";
-  $field_values=array("name","email","mobile","rdate","password","ccode","refercode","wallet","code");
-  $data_values=array("$name","$email","$mobile","$timestamp","$password","$ccode","$refercode","$fin","$prentcode");
+  $field_values=array("name","email","mobile","rdate","password","ccode","refercode","wallet","code","status");
+  $data_values=array("$name","$email","$mobile","$timestamp","$password","$ccode","$refercode","$fin","$prentcode","1");
   
       $h = new Eventmania();
 	  $check = $h->eventinsertdata_Api_Id($field_values,$data_values,$table);
@@ -83,11 +83,11 @@ else
 		   $timestamp = date("Y-m-d H:i:s");
 		   $prentcode = generate_random();
 		   $table="tbl_user";
-  $field_values=array("name","email","mobile","rdate","password","ccode","code");
-  $data_values=array("$name","$email","$mobile","$timestamp","$password","$ccode","$prentcode");
+  $field_values=array("name","email","mobile","rdate","password","ccode","code","status");
+  $data_values=array("$name","$email","$mobile","$timestamp","$password","$ccode","$prentcode","1");
    $h = new Eventmania();
-	  $check = $h->eventinsertdata_Api($field_values,$data_values,$table);
-  $c = $event->query("select * from tbl_user where id=".$check."")->fetch_assoc();
+	  $newId = $h->eventinsertdata_Api_Id($field_values,$data_values,$table);
+  $c = $event->query("select * from tbl_user where id=".(int)$newId."")->fetch_assoc();
   $returnArr = array("UserLogin"=>$c,"ResponseCode"=>"200","Result"=>"true","ResponseMsg"=>"Sign Up Done Successfully!");
   
 	   }

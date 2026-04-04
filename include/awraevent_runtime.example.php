@@ -22,3 +22,8 @@ putenv('AWRAEVENT_SKIP_ENVATO_SCRIPT=1');
 // putenv('DB_PASS=your_pass');
 // putenv('DB_NAME=your_db');
 // putenv('DB_PORT=3306');
+
+// Payment gateways shown in the mobile app (eapi/e_paymentgateway.php).
+// Comma-separated tbl_payment_list.id values. Omit or leave empty = all published methods.
+// Addis Ababa / international card & wallet: usually PayPal (1) + Stripe (2) — confirm IDs in Payment Management.
+// putenv('AWRAEVENT_PAYMENT_GATEWAY_IDS=1,2');

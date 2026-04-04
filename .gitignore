@@ -29,6 +29,26 @@ composer.phar
 /include/eventconfig.php
 /include/awraevent_runtime.php
 
+# Admin uploads / local test media (do not commit; production fills these on the server)
+/images/gallery/
+/images/sponsore/
+/images/cover/
+/images/website/
+/images/event/*.jpg
+/images/event/*.jpeg
+/images/event/*.JPG
+/images/event/*.JPEG
+/images/event/*.png
+/images/event/*.PNG
+/images/event/*.webp
+/images/category/*.jpg
+/images/category/*.jpeg
+/images/category/*.JPG
+/images/category/*.JPEG
+/images/category/*.png
+/images/category/*.PNG
+/images/category/*.webp
+
 # Android / Flutter-ish (if present)
 local.properties
 

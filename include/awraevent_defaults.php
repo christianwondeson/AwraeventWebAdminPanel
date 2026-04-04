@@ -62,3 +62,39 @@ if (!function_exists('awraevent_sanitize_latlng')) {
     return (string) $f;
   }
 }
+
+if (!function_exists('awraevent_payment_gateway_id_allowlist')) {
+  /**
+   * Optional filter for eapi/e_paymentgateway.php (Flutter app list).
+   * When AWRAEVENT_PAYMENT_GATEWAY_IDS is set (comma-separated tbl_payment_list.id),
+   * only those IDs are returned (among rows with status = 1).
+   * Empty/unset = no extra filter (all published gateways).
+   *
+   * Typical GoEvent IDs: 1 PayPal, 2 Stripe, 6 Paystack, 7 Flutterwave, 10 SenangPay,
+   * 11 MercadoPago, 12 Payfast, 13 Midtrans, 15 Khalti (verify in admin Payment Management).
+   */
+  function awraevent_payment_gateway_id_allowlist(): ?array {
+    $raw = getenv('AWRAEVENT_PAYMENT_GATEWAY_IDS');
+    if (!is_string($raw)) {
+      return null;
+    }
+    $raw = trim($raw);
+    if ($raw === '') {
+      return null;
+    }
+    $out = [];
+    foreach (preg_split('/\s*,\s*/', $raw) as $part) {
+      if ($part === '') {
+        continue;
+      }
+      $n = (int) $part;
+      if ($n > 0) {
+        $out[$n] = true;
+      }
+    }
+    if (count($out) === 0) {
+      return null;
+    }
+    return array_keys($out);
+  }
+}
