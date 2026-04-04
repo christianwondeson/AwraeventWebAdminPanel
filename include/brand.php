@@ -57,6 +57,17 @@ if (!function_exists('awraevent_skip_envato_footer_script')) {
   }
 }
 
+if (!function_exists('awraevent_use_envato_footer_only')) {
+  /**
+   * When AWRAEVENT_USE_ENVATO_FOOTER_ONLY=1, footer.php uses only tbl_validate.data for scripts (legacy).
+   * Default (unset): scripts load from disk (vendor/global.min.js, js/custom.min.js) so the admin preloader
+   * and menus work even if the DB blob is empty, blocked, or outdated (common on production VPS).
+   */
+  function awraevent_use_envato_footer_only(): bool {
+    return getenv('AWRAEVENT_USE_ENVATO_FOOTER_ONLY') === '1';
+  }
+}
+
 if (!function_exists('awraevent_is_local_request')) {
   function awraevent_is_local_request() {
     if (awraevent_force_domain_script()) {

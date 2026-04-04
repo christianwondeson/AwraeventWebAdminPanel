@@ -23,6 +23,9 @@ putenv('AWRAEVENT_SKIP_ENVATO_SCRIPT=1');
 // putenv('DB_NAME=your_db');
 // putenv('DB_PORT=3306');
 
+// Legacy: use ONLY tbl_validate.data for footer JS (not recommended on VPS). Default is bundled scripts from disk.
+// putenv('AWRAEVENT_USE_ENVATO_FOOTER_ONLY=1');
+
 // Payment gateways shown in the mobile app (eapi/e_paymentgateway.php).
 // Comma-separated tbl_payment_list.id values. Omit or leave empty = all published methods.
 // Addis Ababa / international card & wallet: usually PayPal (1) + Stripe (2) — confirm IDs in Payment Management.
