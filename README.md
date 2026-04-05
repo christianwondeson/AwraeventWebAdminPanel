@@ -132,4 +132,6 @@ PHP folders such as `stripe/`, `paypal/`, `Khalti/`, `paystack/`, etc. map to **
 
 ## License
 
+Awra Event
+
 Use according to your Codecanyon / Envato license. Envato verification flows are optional once you set `AWRAEVENT_SKIP_ENVATO_SCRIPT=1` and rely on bundled assets as documented above.
