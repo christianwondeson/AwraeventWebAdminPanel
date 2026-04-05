@@ -1,5 +1,49 @@
 <?php
 
+if (!function_exists('awraevent_media_url')) {
+  /**
+   * Absolute URL for DB-stored paths (e.g. images/event/123.jpg) for mobile apps.
+   * Set PUBLIC_BASE_URL on the server (https://admin.example.com) when behind a proxy.
+   */
+  function awraevent_media_url(?string $path): string {
+    if ($path === null) {
+      return '';
+    }
+    $path = trim($path);
+    if ($path === '') {
+      return '';
+    }
+    if (preg_match('#^https?://#i', $path)) {
+      return $path;
+    }
+    return rtrim(awraevent_public_base_url(), '/') . '/' . ltrim(str_replace('\\', '/', $path), '/');
+  }
+}
+
+if (!function_exists('awraevent_media_urls_list')) {
+  /** @param list<string> $paths */
+  function awraevent_media_urls_list(array $paths): array {
+    $out = [];
+    foreach ($paths as $p) {
+      $out[] = awraevent_media_url(is_string($p) ? $p : '');
+    }
+    return $out;
+  }
+}
+
+if (!function_exists('awraevent_user_for_api')) {
+  /**
+   * Strip password and normalize media URLs for JSON (Flutter).
+   */
+  function awraevent_user_for_api(array $row): array {
+    unset($row['password']);
+    if (isset($row['pro_pic']) && $row['pro_pic'] !== null && (string) $row['pro_pic'] !== '') {
+      $row['pro_pic'] = awraevent_media_url((string) $row['pro_pic']);
+    }
+    return $row;
+  }
+}
+
 if (!function_exists('awraevent_public_base_url')) {
   function awraevent_public_base_url() {
     $fromEnv = getenv('PUBLIC_BASE_URL');

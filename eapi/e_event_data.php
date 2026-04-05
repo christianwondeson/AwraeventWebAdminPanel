@@ -1,5 +1,6 @@
 <?php 
 require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
+require_once dirname( dirname(__FILE__) ).'/include/brand.php';
 header('Content-type: text/json');
 $data = json_decode(file_get_contents('php://input'), true);
 $uid = $data['uid'];
@@ -21,7 +22,7 @@ while($ev = $eventlist->fetch_assoc())
 	$cover_img = array();
 	$nav['event_id'] = $ev['id'];
 	$nav['event_title'] = $ev['title'];
-	$nav['event_img'] = $ev['img'];
+	$nav['event_img'] = awraevent_media_url($ev['img']);
 	$cover_img[] = $ev['cover_img'];
 	$check = $event->query("select * from tbl_cover where eid=".$eid." and status=1");
 	while($co = $check->fetch_assoc())
@@ -29,7 +30,7 @@ while($ev = $eventlist->fetch_assoc())
 		array_push($cover_img,$co['img']);
 	}
 	
-	$nav['event_cover_img'] = $cover_img;
+	$nav['event_cover_img'] = awraevent_media_urls_list($cover_img);
 	$date=date_create($ev['sdate']);
 	$nav['event_sdate'] = date_format($date,"d F, Y");
 	$nav['event_time_day'] = date_format($date,"l").','.date("g:i A", strtotime($ev['stime'])).' TO '.date("g:i A", strtotime($ev['etime']));
@@ -51,7 +52,7 @@ while($rp = $ulist->fetch_assoc())
 	}
 	else 
 	{
-	$member[] = $getpic['pro_pic'];
+	$member[] = awraevent_media_url($getpic['pro_pic']);
 	}
 }
 $nav['member_list'] = $member;
@@ -63,7 +64,7 @@ $nav['total_member_list'] = $ticket['books'];
 $gal = $event->query("select * from tbl_gallery where eid=".$eid." and status=1");
 while($row = $gal->fetch_assoc())
 {
-	$g[] = $row['img'];
+	$g[] = awraevent_media_url($row['img']);
 }
 
 $spon = $event->query("select * from tbl_sponsore where eid=".$eid." and status=1");
@@ -71,7 +72,7 @@ $sponsore = array();
 while($row = $spon->fetch_assoc())
 {
 	$sponsore['sponsore_id'] = $row['id'];
-	$sponsore['sponsore_img'] = $row['img'];
+	$sponsore['sponsore_img'] = awraevent_media_url($row['img']);
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }

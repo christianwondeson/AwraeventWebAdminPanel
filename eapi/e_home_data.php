@@ -1,5 +1,6 @@
 <?php 
 require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
+require_once dirname( dirname(__FILE__) ).'/include/brand.php';
 header('Content-type: text/json');
 $data = json_decode(file_get_contents('php://input'), true);
 $uid = $data['uid'];
@@ -23,8 +24,8 @@ while($row = $cato->fetch_assoc())
 {
 	$cat['id'] = $row['id'];
 	$cat['title'] = $row['title'];
-	$cat['cat_img'] = $row['img'];
-	$cat['cover_img'] = $row['cover_img'];
+	$cat['cat_img'] = awraevent_media_url($row['img']);
+	$cat['cover_img'] = awraevent_media_url($row['cover_img']);
     $cp[] = $cat;
 }
 $timestamp = date("Y-m-d");
@@ -45,7 +46,7 @@ if($ev['sdate'].' '.$ev['etime'] <= $chtime)
 		$event->query("update tbl_event set is_booked=1 where id=".$ev['id']."");
 		$nav['event_id'] = $ev['id'];
 	$nav['event_title'] = $ev['title'];
-	$nav['event_img'] = $ev['cover_img'];
+	$nav['event_img'] = awraevent_media_url($ev['cover_img']);
 	$nav['is_booked'] = $ev['is_booked'];
 	$date=date_create($ev['sdate']);
 	$nav['event_sdate'] = date_format($date,"d F");
@@ -57,7 +58,7 @@ $s = array();
 while($row = $spon->fetch_assoc())
 {
 	$sponsore['sponsore_id'] = $row['id'];
-	$sponsore['sponsore_img'] = $row['img'];
+	$sponsore['sponsore_img'] = awraevent_media_url($row['img']);
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
@@ -72,7 +73,7 @@ while($rp = $ulist->fetch_assoc())
 	}
 	else 
 	{
-	$member[] = $getpic['pro_pic'];
+	$member[] = awraevent_media_url($getpic['pro_pic']);
 	}
 }
 $nav['member_list'] = $member;
@@ -86,7 +87,7 @@ $v[] = $nav;
 		
 	$nav['event_id'] = $ev['id'];
 	$nav['event_title'] = $ev['title'];
-	$nav['event_img'] = $ev['cover_img'];
+	$nav['event_img'] = awraevent_media_url($ev['cover_img']);
 	$nav['is_booked'] = $ev['is_booked'];
 	$date=date_create($ev['sdate']);
 	$nav['event_sdate'] = date_format($date,"d F");
@@ -98,7 +99,7 @@ $s = array();
 while($row = $spon->fetch_assoc())
 {
 	$sponsore['sponsore_id'] = $row['id'];
-	$sponsore['sponsore_img'] = $row['img'];
+	$sponsore['sponsore_img'] = awraevent_media_url($row['img']);
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
@@ -113,7 +114,7 @@ while($rp = $ulist->fetch_assoc())
 	}
 	else 
 	{
-	$member[] = $getpic['pro_pic'];
+	$member[] = awraevent_media_url($getpic['pro_pic']);
 	}
 }
 $nav['member_list'] = $member;
@@ -141,7 +142,7 @@ while($evc = $eventlistc->fetch_assoc())
 		$navc['event_id'] = $evc['id'];
 	$navc['event_title'] = $evc['title'];
 	$navc['is_booked'] = $evc['is_booked'];
-	$navc['event_img'] = $evc['cover_img'];
+	$navc['event_img'] = awraevent_media_url($evc['cover_img']);
 	$date=date_create($evc['sdate']);
 	$navc['event_sdate'] = date_format($date,"d F");
 	$navc['event_address'] = $evc['address'];
@@ -152,7 +153,7 @@ $s = array();
 while($row = $spon->fetch_assoc())
 {
 	$sponsore['sponsore_id'] = $row['id'];
-	$sponsore['sponsore_img'] = $row['img'];
+	$sponsore['sponsore_img'] = awraevent_media_url($row['img']);
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
@@ -168,7 +169,7 @@ while($rp = $ulist->fetch_assoc())
 	}
 	else 
 	{
-	$member[] = $getpic['pro_pic'];
+	$member[] = awraevent_media_url($getpic['pro_pic']);
 	}
 }
 $navc['member_list'] = $member;
@@ -182,7 +183,7 @@ $navc['total_member_list'] = $ticket['books'];
 	$navc['event_id'] = $evc['id'];
 	$navc['event_title'] = $evc['title'];
 	$navc['is_booked'] = $evc['is_booked'];
-	$navc['event_img'] = $evc['cover_img'];
+	$navc['event_img'] = awraevent_media_url($evc['cover_img']);
 	$date=date_create($evc['sdate']);
 	$navc['event_sdate'] = date_format($date,"d F");
 	$navc['event_address'] = $evc['address'];
@@ -193,7 +194,7 @@ $s = array();
 while($row = $spon->fetch_assoc())
 {
 	$sponsore['sponsore_id'] = $row['id'];
-	$sponsore['sponsore_img'] = $row['img'];
+	$sponsore['sponsore_img'] = awraevent_media_url($row['img']);
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
@@ -209,7 +210,7 @@ while($rp = $ulist->fetch_assoc())
 	}
 	else 
 	{
-	$member[] = $getpic['pro_pic'];
+	$member[] = awraevent_media_url($getpic['pro_pic']);
 	}
 }
 $navc['member_list'] = $member;
@@ -237,7 +238,7 @@ while($evs = $eventlists->fetch_assoc())
 		$navs['event_id'] = $evs['id'];
 	$navs['event_title'] = $evs['title'];
 	$navs['is_booked'] = $evs['is_booked'];
-	$navs['event_img'] = $evs['img'];
+	$navs['event_img'] = awraevent_media_url($evs['img']);
 	$date=date_create($evs['sdate']);
 	$navs['event_sdate'] = strtoupper(date_format($date,"dS M - D - ").date("g:i A", strtotime($evs['stime'])));
 	$navs['event_address'] = $evs['address'];
@@ -248,7 +249,7 @@ $s = array();
 while($row = $spon->fetch_assoc())
 {
 	$sponsore['sponsore_id'] = $row['id'];
-	$sponsore['sponsore_img'] = $row['img'];
+	$sponsore['sponsore_img'] = awraevent_media_url($row['img']);
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
@@ -264,7 +265,7 @@ while($rp = $ulist->fetch_assoc())
 	}
 	else 
 	{
-	$member[] = $getpic['pro_pic'];
+	$member[] = awraevent_media_url($getpic['pro_pic']);
 	}
 }
 $navs['member_list'] = $member;
@@ -279,7 +280,7 @@ $navs['total_member_list'] = $ticket['books'];
 	$navs['event_id'] = $evs['id'];
 	$navs['event_title'] = $evs['title'];
 	$navs['is_booked'] = $evs['is_booked'];
-	$navs['event_img'] = $evs['img'];
+	$navs['event_img'] = awraevent_media_url($evs['img']);
 	$date=date_create($evs['sdate']);
 	$navs['event_sdate'] = strtoupper(date_format($date,"dS M - D - ").date("g:i A", strtotime($evs['stime'])));
 	$navs['event_address'] = $evs['address'];
@@ -290,7 +291,7 @@ $s = array();
 while($row = $spon->fetch_assoc())
 {
 	$sponsore['sponsore_id'] = $row['id'];
-	$sponsore['sponsore_img'] = $row['img'];
+	$sponsore['sponsore_img'] = awraevent_media_url($row['img']);
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
@@ -306,7 +307,7 @@ while($rp = $ulist->fetch_assoc())
 	}
 	else 
 	{
-	$member[] = $getpic['pro_pic'];
+	$member[] = awraevent_media_url($getpic['pro_pic']);
 	}
 }
 $navs['member_list'] = $member;
@@ -333,7 +334,7 @@ while($e = $eve->fetch_assoc())
 		$na['event_id'] = $e['id'];
 	$na['event_title'] = $e['title'];
 	$na['is_booked'] = $e['is_booked'];
-	$na['event_img'] = $e['img'];
+	$na['event_img'] = awraevent_media_url($e['img']);
 	$date=date_create($e['sdate']);
 	$na['event_sdate'] = date_format($date,"d F");
 	$na['event_address'] = $e['address'];
@@ -344,7 +345,7 @@ $s = array();
 while($row = $spon->fetch_assoc())
 {
 	$sponsore['sponsore_id'] = $row['id'];
-	$sponsore['sponsore_img'] = $row['img'];
+	$sponsore['sponsore_img'] = awraevent_media_url($row['img']);
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
@@ -360,7 +361,7 @@ while($rp = $ulist->fetch_assoc())
 	}
 	else 
 	{
-	$member[] = $getpic['pro_pic'];
+	$member[] = awraevent_media_url($getpic['pro_pic']);
 	}
 }
 $na['member_list'] = $member;
@@ -374,7 +375,7 @@ $na['total_member_list'] = $ticket['books'];
 	$na['event_id'] = $e['id'];
 	$na['event_title'] = $e['title'];
 	$na['is_booked'] = $e['is_booked'];
-	$na['event_img'] = $e['img'];
+	$na['event_img'] = awraevent_media_url($e['img']);
 	$date=date_create($e['sdate']);
 	$na['event_sdate'] = date_format($date,"d F");
 	$na['event_address'] = $e['address'];
@@ -385,7 +386,7 @@ $s = array();
 while($row = $spon->fetch_assoc())
 {
 	$sponsore['sponsore_id'] = $row['id'];
-	$sponsore['sponsore_img'] = $row['img'];
+	$sponsore['sponsore_img'] = awraevent_media_url($row['img']);
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
@@ -401,7 +402,7 @@ while($rp = $ulist->fetch_assoc())
 	}
 	else 
 	{
-	$member[] = $getpic['pro_pic'];
+	$member[] = awraevent_media_url($getpic['pro_pic']);
 	}
 }
 $na['member_list'] = $member;

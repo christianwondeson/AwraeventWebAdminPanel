@@ -1,42 +1,38 @@
-<?php 
-require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
-require dirname( dirname(__FILE__) ).'/include/eventmania.php';
-header('Content-type: text/json');
+<?php
+require dirname(__DIR__) . '/include/eventconfig.php';
+require dirname(__DIR__) . '/include/eventmania.php';
+require_once dirname(__DIR__) . '/include/brand.php';
+require_once dirname(__DIR__) . '/include/awraevent_password.php';
+
+header('Content-Type: application/json; charset=utf-8');
 $data = json_decode(file_get_contents('php://input'), true);
-if($data['name'] == '' or $data['password'] == '' or $data['uid'] == '')
-{
-    $returnArr = array("ResponseCode"=>"401","Result"=>"false","ResponseMsg"=>"Something Went Wrong!");
+if (!is_array($data) || $data['name'] == '' || $data['password'] == '' || $data['uid'] == '') {
+  echo json_encode(['ResponseCode' => '401', 'Result' => 'false', 'ResponseMsg' => 'Something Went Wrong!']);
+  exit;
 }
-else
-{
-    
-    $fname = strip_tags(mysqli_real_escape_string($event,$data['name']));
-   
-    $email = strip_tags(mysqli_real_escape_string($event,$data['email']));
-     $password = strip_tags(mysqli_real_escape_string($event,$data['password']));
-	 
-$uid =  strip_tags(mysqli_real_escape_string($event,$data['uid']));
-$checkimei = $event->query("select * from tbl_user where  `id`=".$uid."")->num_rows;
 
-if($checkimei == 0)
-    {
-		     $returnArr = array("ResponseCode"=>"401","Result"=>"false","ResponseMsg"=>"User Not Exist!!!!");  
-	}
+$fname = strip_tags((string) $data['name']);
+$email = strip_tags((string) $data['email']);
+$passwordHash = awraevent_password_hash((string) $data['password']);
+$uid = (int) $data['uid'];
 
-else 
-{	
-	   $table="tbl_user";
-  $field = array('name'=>$fname,'password'=>$password,'email'=>$email);
-  $where = "where id=".$uid."";
+$checkimei = $event->query('SELECT 1 FROM tbl_user WHERE id=' . $uid . ' LIMIT 1')->num_rows;
+if ($checkimei == 0) {
+  echo json_encode(['ResponseCode' => '401', 'Result' => 'false', 'ResponseMsg' => 'User Not Exist!!!!']);
+  exit;
+}
+
 $h = new Eventmania();
-	  $check = $h->eventupdateData_Api($field,$table,$where);
-	  
-            $c = $event->query("select * from tbl_user where  `id`=".$uid."")->fetch_assoc();
-        $returnArr = array("UserLogin"=>$c,"ResponseCode"=>"200","Result"=>"true","ResponseMsg"=>"Profile Update successfully!");
-        
-    
-	}
-    
-}
+$h->eventupdateData_Api(
+  ['name' => $fname, 'password' => $passwordHash, 'email' => $email],
+  'tbl_user',
+  'WHERE id=' . $uid
+);
 
-echo json_encode($returnArr);
+$c = $event->query('SELECT * FROM tbl_user WHERE id=' . $uid . ' LIMIT 1')->fetch_assoc();
+echo json_encode([
+  'UserLogin' => awraevent_user_for_api(is_array($c) ? $c : []),
+  'ResponseCode' => '200',
+  'Result' => 'true',
+  'ResponseMsg' => 'Profile Update successfully!',
+], JSON_UNESCAPED_UNICODE);

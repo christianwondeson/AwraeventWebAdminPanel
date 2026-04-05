@@ -1,98 +1,92 @@
-<?php 
-require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
-require dirname( dirname(__FILE__) ).'/include/eventmania.php';
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+<?php
+require dirname(__DIR__) . '/include/eventconfig.php';
+require dirname(__DIR__) . '/include/eventmania.php';
+require_once dirname(__DIR__) . '/include/brand.php';
+require_once dirname(__DIR__) . '/include/awraevent_password.php';
+
+header('Content-Type: application/json; charset=utf-8');
+
 $data = json_decode(file_get_contents('php://input'), true);
-function generate_random()
-{
-	require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
-	$six_digit_random_number = mt_rand(100000, 999999);
-	$c_refer = $event->query("select * from tbl_user where code=".$six_digit_random_number."")->num_rows;
-	if($c_refer != 0)
-	{
-		generate_random();
-	}
-	else 
-	{
-		return $six_digit_random_number;
-	}
+if (!is_array($data)) {
+  echo json_encode(['ResponseCode' => '401', 'Result' => 'false', 'ResponseMsg' => 'Something Went Wrong!']);
+  exit;
 }
 
-if($data['name'] == ''  or $data['mobile'] == ''   or $data['password'] == '' or $data['ccode'] == '' or $data['email'] == '')
-{
-    $returnArr = array("ResponseCode"=>"401","Result"=>"false","ResponseMsg"=>"Something Went Wrong!");
-}
-else
-{
-    
-    $name = strip_tags(mysqli_real_escape_string($event,$data['name']));
-	$email = strip_tags(mysqli_real_escape_string($event,$data['email']));
-    $mobile = strip_tags(mysqli_real_escape_string($event,$data['mobile']));
-	$ccode = strip_tags(mysqli_real_escape_string($event,$data['ccode']));
-     $password = strip_tags(mysqli_real_escape_string($event,$data['password']));
-     $refercode = strip_tags(mysqli_real_escape_string($event,$data['refercode']));
-     
-     
-    $checkmob = $event->query("select * from tbl_user where mobile=".$mobile."");
-    
-   
-    if($checkmob->num_rows != 0)
-    {
-        $returnArr = array("ResponseCode"=>"401","Result"=>"false","ResponseMsg"=>"Mobile Number Already Used!");
-    }
-    else
-    {
-       
-	   if($refercode != '')
-	   {
-		 $c_refer = $event->query("select * from tbl_user where code=".$refercode."")->num_rows;
-		 if($c_refer != 0)
-		 {
-			 
-        $timestamp = date("Y-m-d H:i:s");
-        $prentcode = generate_random();
-		$wallet = $event->query("select * from tbl_setting")->fetch_assoc();
-		$fin = $wallet['scredit'];
-		$table="tbl_user";
-  $field_values=array("name","email","mobile","rdate","password","ccode","refercode","wallet","code","status");
-  $data_values=array("$name","$email","$mobile","$timestamp","$password","$ccode","$refercode","$fin","$prentcode","1");
-  
-      $h = new Eventmania();
-	  $check = $h->eventinsertdata_Api_Id($field_values,$data_values,$table);
-	  
-	  $table="wallet_report";
-  $field_values=array("uid","message","status","amt","tdate");
-  $data_values=array("$check",'Sign up Credit Added!!','Credit',"$fin","$timestamp");
-   
-      $h = new Eventmania();
-	  $checks = $h->eventinsertdata_Api($field_values,$data_values,$table);
-	  
- $c = $event->query("select * from tbl_user where id=".$check."")->fetch_assoc();
-    
-        $returnArr = array("UserLogin"=>$c,"ResponseCode"=>"200","Result"=>"true","ResponseMsg"=>"Sign Up Done Successfully!");
-    }
-	else 
-		 {
-		$returnArr = array("ResponseCode"=>"401","Result"=>"false","ResponseMsg"=>"Refer Code Not Found Please Try Again!!");
-	   }
-	   }
-	   else 
-	   {
-		   $timestamp = date("Y-m-d H:i:s");
-		   $prentcode = generate_random();
-		   $table="tbl_user";
-  $field_values=array("name","email","mobile","rdate","password","ccode","code","status");
-  $data_values=array("$name","$email","$mobile","$timestamp","$password","$ccode","$prentcode","1");
-   $h = new Eventmania();
-	  $newId = $h->eventinsertdata_Api_Id($field_values,$data_values,$table);
-  $c = $event->query("select * from tbl_user where id=".(int)$newId."")->fetch_assoc();
-  $returnArr = array("UserLogin"=>$c,"ResponseCode"=>"200","Result"=>"true","ResponseMsg"=>"Sign Up Done Successfully!");
-  
-	   }
-    
-}
+function awraevent_generate_user_code(): int {
+  global $event;
+  $six_digit_random_number = mt_rand(100000, 999999);
+  $c_refer = $event->query('SELECT 1 FROM tbl_user WHERE code=' . (int) $six_digit_random_number . ' LIMIT 1')->num_rows;
+  if ($c_refer != 0) {
+    return awraevent_generate_user_code();
+  }
+  return $six_digit_random_number;
 }
 
-echo json_encode($returnArr);
+if ($data['name'] == '' || $data['mobile'] == '' || $data['password'] == '' || $data['ccode'] == '' || $data['email'] == '') {
+  echo json_encode(['ResponseCode' => '401', 'Result' => 'false', 'ResponseMsg' => 'Something Went Wrong!']);
+  exit;
+}
+
+$name = strip_tags((string) $data['name']);
+$email = strip_tags((string) $data['email']);
+$mobile = strip_tags((string) $data['mobile']);
+$ccode = strip_tags((string) $data['ccode']);
+$passwordHash = awraevent_password_hash((string) $data['password']);
+$refercode = isset($data['refercode']) ? strip_tags((string) $data['refercode']) : '';
+
+$checkmob = $event->query("SELECT 1 FROM tbl_user WHERE mobile='" . $event->real_escape_string($mobile) . "' LIMIT 1");
+
+if ($checkmob->num_rows != 0) {
+  echo json_encode(['ResponseCode' => '401', 'Result' => 'false', 'ResponseMsg' => 'Mobile Number Already Used!']);
+  exit;
+}
+
+$h = new Eventmania();
+
+if ($refercode != '') {
+  $c_refer = $event->query('SELECT 1 FROM tbl_user WHERE code=' . (int) $refercode . ' LIMIT 1')->num_rows;
+  if ($c_refer == 0) {
+    echo json_encode(['ResponseCode' => '401', 'Result' => 'false', 'ResponseMsg' => 'Refer Code Not Found Please Try Again!!']);
+    exit;
+  }
+
+  $timestamp = date('Y-m-d H:i:s');
+  $prentcode = awraevent_generate_user_code();
+  $wallet = $event->query('SELECT * FROM tbl_setting LIMIT 1')->fetch_assoc();
+  $fin = (int) ($wallet['scredit'] ?? 0);
+
+  $field_values = ['name', 'email', 'mobile', 'rdate', 'password', 'ccode', 'refercode', 'wallet', 'code', 'status'];
+  $data_values = [$name, $email, $mobile, $timestamp, $passwordHash, $ccode, (string) (int) $refercode, (string) $fin, (string) $prentcode, '1'];
+
+  $newId = $h->eventinsertdata_Api_Id($field_values, $data_values, 'tbl_user');
+
+  $h->eventinsertdata_Api(
+    ['uid', 'message', 'status', 'amt', 'tdate'],
+    [(string) $newId, 'Sign up Credit Added!!', 'Credit', (string) $fin, $timestamp],
+    'wallet_report'
+  );
+
+  $c = $event->query('SELECT * FROM tbl_user WHERE id=' . (int) $newId . ' LIMIT 1')->fetch_assoc();
+  echo json_encode([
+    'UserLogin' => awraevent_user_for_api(is_array($c) ? $c : []),
+    'ResponseCode' => '200',
+    'Result' => 'true',
+    'ResponseMsg' => 'Sign Up Done Successfully!',
+  ], JSON_UNESCAPED_UNICODE);
+  exit;
+}
+
+$timestamp = date('Y-m-d H:i:s');
+$prentcode = awraevent_generate_user_code();
+$field_values = ['name', 'email', 'mobile', 'rdate', 'password', 'ccode', 'code', 'status'];
+$data_values = [$name, $email, $mobile, $timestamp, $passwordHash, $ccode, (string) $prentcode, '1'];
+
+$newId = $h->eventinsertdata_Api_Id($field_values, $data_values, 'tbl_user');
+$c = $event->query('SELECT * FROM tbl_user WHERE id=' . (int) $newId . ' LIMIT 1')->fetch_assoc();
+
+echo json_encode([
+  'UserLogin' => awraevent_user_for_api(is_array($c) ? $c : []),
+  'ResponseCode' => '200',
+  'Result' => 'true',
+  'ResponseMsg' => 'Sign Up Done Successfully!',
+], JSON_UNESCAPED_UNICODE);

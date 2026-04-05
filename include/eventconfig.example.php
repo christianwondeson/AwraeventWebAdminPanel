@@ -33,6 +33,8 @@ try {
 }
 
 require_once __DIR__ . '/awraevent_defaults.php';
+require_once __DIR__ . '/brand.php';
+require_once __DIR__ . '/awraevent_password.php';
 
 $set = $event->query("SELECT * FROM `tbl_setting` LIMIT 1")->fetch_assoc();
 if (!is_array($set)) {

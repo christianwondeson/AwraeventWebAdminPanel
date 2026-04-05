@@ -1,36 +1,51 @@
-<?php 
-require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
+<?php
+require dirname(__DIR__) . '/include/eventconfig.php';
+require_once dirname(__DIR__) . '/include/brand.php';
+require_once dirname(__DIR__) . '/include/awraevent_password.php';
+
+header('Content-Type: application/json; charset=utf-8');
 
 $data = json_decode(file_get_contents('php://input'), true);
-if($data['mobile'] == ''  or $data['password'] == '')
-{
-    $returnArr = array("ResponseCode"=>"401","Result"=>"false","ResponseMsg"=>"Something Went Wrong!");
-}
-else
-{
-    $mobile = strip_tags(mysqli_real_escape_string($event,$data['mobile']));
-    $password = strip_tags(mysqli_real_escape_string($event,$data['password']));
-    
-$chek = $event->query("select * from tbl_user where mobile='".$mobile."' and status = 1 and password='".$password."'");
-$status = $event->query("select * from tbl_user where status = 1");
-if($status->num_rows !=0)
-{
-if($chek->num_rows != 0)
-{
-    $c = $event->query("select * from tbl_user where mobile='".$mobile."'  and status = 1 and password='".$password."'");
-    $c = $c->fetch_assoc();
-	
-    $returnArr = array("UserLogin"=>$c,"ResponseCode"=>"200","Result"=>"true","ResponseMsg"=>"Login successfully!");
-}
-else
-{
-    $returnArr = array("ResponseCode"=>"401","Result"=>"false","ResponseMsg"=>"Invalid Email/Mobile No or Password!!!");
-}
-}
-else  
-{
-	 $returnArr = array("ResponseCode"=>"401","Result"=>"false","ResponseMsg"=>"Your Status Deactivate!!!");
-}
+if (!is_array($data) || $data['mobile'] == '' || $data['password'] == '') {
+  echo json_encode(['ResponseCode' => '401', 'Result' => 'false', 'ResponseMsg' => 'Something Went Wrong!']);
+  exit;
 }
 
-echo json_encode($returnArr);
+$mobile = strip_tags((string) $data['mobile']);
+$passwordPlain = (string) $data['password'];
+$mobileEsc = $event->real_escape_string($mobile);
+
+$chek = $event->query("SELECT * FROM tbl_user WHERE mobile='" . $mobileEsc . "' AND status = 1 LIMIT 1");
+$status = $event->query('SELECT 1 FROM tbl_user WHERE status = 1 LIMIT 1');
+
+if ($status->num_rows == 0) {
+  echo json_encode(['ResponseCode' => '401', 'Result' => 'false', 'ResponseMsg' => 'Your Status Deactivate!!!']);
+  exit;
+}
+
+if ($chek->num_rows == 0) {
+  echo json_encode(['ResponseCode' => '401', 'Result' => 'false', 'ResponseMsg' => 'Invalid Email/Mobile No or Password!!!']);
+  exit;
+}
+
+$c = $chek->fetch_assoc();
+$stored = (string) ($c['password'] ?? '');
+
+if (!awraevent_password_verify($passwordPlain, $stored)) {
+  echo json_encode(['ResponseCode' => '401', 'Result' => 'false', 'ResponseMsg' => 'Invalid Email/Mobile No or Password!!!']);
+  exit;
+}
+
+if (!awraevent_password_is_modern_hash($stored)) {
+  $nh = awraevent_password_hash($passwordPlain);
+  $event->query("UPDATE tbl_user SET password='" . $event->real_escape_string($nh) . "' WHERE id=" . (int) $c['id']);
+}
+
+$c = $event->query('SELECT * FROM tbl_user WHERE id=' . (int) $c['id'] . ' LIMIT 1')->fetch_assoc();
+
+echo json_encode([
+  'UserLogin' => awraevent_user_for_api(is_array($c) ? $c : []),
+  'ResponseCode' => '200',
+  'Result' => 'true',
+  'ResponseMsg' => 'Login successfully!',
+], JSON_UNESCAPED_UNICODE);

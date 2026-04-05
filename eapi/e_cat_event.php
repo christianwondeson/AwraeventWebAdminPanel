@@ -1,5 +1,6 @@
 <?php 
 require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
+require_once dirname( dirname(__FILE__) ).'/include/brand.php';
 header('Content-type: text/json');
 $data = json_decode(file_get_contents('php://input'), true);
 $uid = $data['uid'];
@@ -20,7 +21,7 @@ while($ev = $eventlist->fetch_assoc())
 {
 	$nav['event_id'] = $ev['id'];
 	$nav['event_title'] = $ev['title'];
-	$nav['event_img'] = $ev['img'];
+	$nav['event_img'] = awraevent_media_url($ev['img']);
 	$date=date_create($ev['sdate']);
 	$nav['event_sdate'] = date_format($date,"d F");
 	$nav['event_address'] = $ev['address'];
@@ -31,7 +32,7 @@ $s = array();
 while($row = $spon->fetch_assoc())
 {
 	$sponsore['sponsore_id'] = $row['id'];
-	$sponsore['sponsore_img'] = $row['img'];
+	$sponsore['sponsore_img'] = awraevent_media_url($row['img']);
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }

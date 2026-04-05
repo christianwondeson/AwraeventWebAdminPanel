@@ -1,8 +1,25 @@
 <?php 
 require_once __DIR__ . '/eventconfig.php';
 require_once __DIR__ . '/eventmania.php';
+require_once __DIR__ . '/awraevent_upload_helpers.php';
 
 header('Content-Type: application/json; charset=utf-8');
+
+set_exception_handler(static function (Throwable $e): void {
+  header('Content-Type: application/json; charset=utf-8');
+  if (!headers_sent()) {
+    http_response_code(500);
+  }
+  $debug = getenv('APP_DEBUG') === '1';
+  echo json_encode([
+    'ResponseCode' => '500',
+    'Result' => 'false',
+    'title' => 'Server error',
+    'message' => $debug ? $e->getMessage() : 'Request failed. Check PHP log, DB schema (tbl_event columns), and write access to images/*.',
+    'action' => '',
+  ], JSON_UNESCAPED_UNICODE);
+  exit;
+});
 
 $returnArr = array(
 	'ResponseCode' => '200',
@@ -96,35 +113,42 @@ $h = new Eventmania();
 }
 else if($_POST['type'] == 'add_category')
 {
-	$okey = $_POST['status'];
-	$title = $event->real_escape_string($_POST['title']);
-			$target_dir = dirname( dirname(__FILE__) )."/images/category/";
-			$url = "images/category/";
-			$temp = explode(".", $_FILES["cat_img"]["name"]);
-$newfilename = round(microtime(true)) . '.' . end($temp);
-$target_file = $target_dir . basename($newfilename);
-$url = $url . basename($newfilename);
+	try {
+		$okey = $_POST['status'];
+		$title = $event->real_escape_string($_POST['title']);
+		awraevent_require_upload($_FILES['cat_img'] ?? [], 'category image');
+		awraevent_require_upload($_FILES['cover_img'] ?? [], 'category cover');
+		$target_dir = dirname(dirname(__FILE__)) . '/images/category/';
+		if (!awraevent_ensure_upload_dir($target_dir)) {
+			throw new RuntimeException('Cannot create or write images/category/');
+		}
+		$url = 'images/category/';
+		$ext = awraevent_upload_ext_from_name((string) ($_FILES['cat_img']['name'] ?? ''));
+		$newfilename = round(microtime(true)) . '.' . $ext;
+		$target_file = $target_dir . $newfilename;
+		$url = $url . $newfilename;
 
-$target_dirs = dirname( dirname(__FILE__) )."/images/category/";
-			$urls = "images/category/";
-			$temps = explode(".", $_FILES["cover_img"]["name"]);
-$newfilenames = uniqid().round(microtime(true)) . '.' . end($temps);
-$target_files = $target_dirs . basename($newfilenames);
-$urls = $urls . basename($newfilenames);
+		$extc = awraevent_upload_ext_from_name((string) ($_FILES['cover_img']['name'] ?? ''));
+		$newfilenames = uniqid('', true) . round(microtime(true)) . '.' . $extc;
+		$target_files = $target_dir . $newfilenames;
+		$urls = 'images/category/' . $newfilenames;
 
+		if (!move_uploaded_file($_FILES['cat_img']['tmp_name'], $target_file)
+			|| !move_uploaded_file($_FILES['cover_img']['tmp_name'], $target_files)) {
+			throw new RuntimeException('Could not save category images');
+		}
+		$table = 'tbl_cat';
+		$field_values = array('img', 'status', 'title', 'cover_img');
+		$data_values = array("$url", "$okey", "$title", "$urls");
 
-	move_uploaded_file($_FILES["cat_img"]["tmp_name"], $target_file);
-	move_uploaded_file($_FILES["cover_img"]["tmp_name"], $target_files);
-	$table="tbl_cat";
-  $field_values=array("img","status","title","cover_img");
-  $data_values=array("$url","$okey","$title","$urls");
-  
-$h = new Eventmania();
-	  $check = $h->eventinsertdata($field_values,$data_values,$table);
-	  if($check == 1)
-{
-	$returnArr = array("ResponseCode"=>"200","Result"=>"true","title"=>"Category Add Successfully!!","message"=>"Category section!","action"=>"list_category.php");
-}
+		$h = new Eventmania();
+		$check = $h->eventinsertdata($field_values, $data_values, $table);
+		if ($check == 1) {
+			$returnArr = array('ResponseCode' => '200', 'Result' => 'true', 'title' => 'Category Add Successfully!!', 'message' => 'Category section!', 'action' => 'list_category.php');
+		}
+	} catch (InvalidArgumentException | RuntimeException $e) {
+		$returnArr = array('ResponseCode' => '200', 'Result' => 'false', 'title' => 'Upload failed', 'message' => $e->getMessage(), 'action' => '');
+	}
 }
 else if($_POST['type'] == 'edit_category')
 {
@@ -575,7 +599,7 @@ $h = new Eventmania();
 else if($_POST['type'] == 'edit_profile')
 {
 	$dname = $_POST['email'];
-			$dsname = $_POST['password'];
+	$dsname = awraevent_password_hash((string) $_POST['password']);
 	$id = $_POST['id'];
 	$table="admin";
   $field = array('username'=>$dname,'password'=>$dsname);
@@ -589,46 +613,61 @@ $h = new Eventmania();
 }
 else if($_POST['type'] == 'add_events')
 {
-	$title = $event->real_escape_string($_POST['title']);
-	$address = $event->real_escape_string($_POST['address']);
-	$description = $event->real_escape_string($_POST['cdesc']);
-	$disclaimer = $event->real_escape_string($_POST['disclaimer']);
-	$status = $_POST['status'];
-	$place_name = $event->real_escape_string($_POST['pname']);
-	$sdate = $_POST['sdate'];
-	$stime = $_POST['stime'];
-	$etime = $_POST['etime'];
-	$cid = $_POST['cid'];
-	$latitude = $event->real_escape_string(awraevent_sanitize_latlng($_POST['latitude'] ?? '', true));
-	$longtitude = $event->real_escape_string(awraevent_sanitize_latlng($_POST['longtitude'] ?? '', false));
-	
-	$target_dir = dirname( dirname(__FILE__) )."/images/event/";
-			$url = "images/event/";
-			$temp = explode(".", $_FILES["cat_img"]["name"]);
-$newfilename = round(microtime(true)) . '.' . end($temp);
-$target_file = $target_dir . basename($newfilename);
-$url = $url . basename($newfilename);
+	try {
+		$title = $event->real_escape_string($_POST['title']);
+		$address = $event->real_escape_string($_POST['address']);
+		$description = $event->real_escape_string($_POST['cdesc']);
+		$disclaimer = $event->real_escape_string($_POST['disclaimer']);
+		$status = $_POST['status'];
+		$place_name = $event->real_escape_string($_POST['pname']);
+		$sdate = $_POST['sdate'];
+		$stime = $_POST['stime'];
+		$etime = $_POST['etime'];
+		$cid = $_POST['cid'];
+		$latitude = $event->real_escape_string(awraevent_sanitize_latlng($_POST['latitude'] ?? '', true));
+		$longtitude = $event->real_escape_string(awraevent_sanitize_latlng($_POST['longtitude'] ?? '', false));
 
-$target_dirs = dirname( dirname(__FILE__) )."/images/event/";
-			$urls = "images/event/";
-			$temps = explode(".", $_FILES["cover_img"]["name"]);
-$newfilenames = uniqid().round(microtime(true)) . '.' . end($temps);
-$target_files = $target_dirs . basename($newfilenames);
-$urls = $urls . basename($newfilenames);
+		awraevent_require_upload($_FILES['cat_img'] ?? [], 'event image');
+		awraevent_require_upload($_FILES['cover_img'] ?? [], 'cover image');
 
+		$target_dir = dirname(dirname(__FILE__)) . '/images/event/';
+		if (!awraevent_ensure_upload_dir($target_dir)) {
+			throw new RuntimeException('Cannot create or write images/event/');
+		}
+		$url = 'images/event/';
+		$ext = awraevent_upload_ext_from_name((string) ($_FILES['cat_img']['name'] ?? ''));
+		$newfilename = round(microtime(true)) . '.' . $ext;
+		$target_file = $target_dir . $newfilename;
+		$url = $url . $newfilename;
 
-	move_uploaded_file($_FILES["cat_img"]["tmp_name"], $target_file);
-	move_uploaded_file($_FILES["cover_img"]["tmp_name"], $target_files);
-	$table="tbl_event";
-  $field_values=array("cid","title","img","cover_img","sdate","stime","etime","address","status","description","disclaimer","latitude","longtitude","place_name");
-  $data_values=array("$cid","$title","$url","$urls","$sdate","$stime","$etime","$address","$status","$description","$disclaimer","$latitude","$longtitude","$place_name");
-  
-$h = new Eventmania();
-	  $check = $h->eventinsertdata($field_values,$data_values,$table);
-	  if($check == 1)
-{
-	$returnArr = array("ResponseCode"=>"200","Result"=>"true","title"=>"Event Add Successfully!!","message"=>"Event section!","action"=>"list_events.php");
-}	
+		$extc = awraevent_upload_ext_from_name((string) ($_FILES['cover_img']['name'] ?? ''));
+		$newfilenames = uniqid('', true) . round(microtime(true)) . '.' . $extc;
+		$target_files = $target_dir . $newfilenames;
+		$urls = 'images/event/' . $newfilenames;
+
+		if (!move_uploaded_file($_FILES['cat_img']['tmp_name'], $target_file)
+			|| !move_uploaded_file($_FILES['cover_img']['tmp_name'], $target_files)) {
+			throw new RuntimeException('Could not save event images');
+		}
+
+		$table = 'tbl_event';
+		$field_values = array(
+			'cid', 'title', 'img', 'cover_img', 'sdate', 'stime', 'etime', 'address', 'status',
+			'description', 'disclaimer', 'latitude', 'longtitude', 'place_name', 'event_status', 'is_booked',
+		);
+		$data_values = array(
+			"$cid", "$title", "$url", "$urls", "$sdate", "$stime", "$etime", "$address", "$status",
+			"$description", "$disclaimer", "$latitude", "$longtitude", "$place_name", 'Pending', '0',
+		);
+
+		$h = new Eventmania();
+		$check = $h->eventinsertdata($field_values, $data_values, $table);
+		if ($check == 1) {
+			$returnArr = array('ResponseCode' => '200', 'Result' => 'true', 'title' => 'Event Add Successfully!!', 'message' => 'Event section!', 'action' => 'list_events.php');
+		}
+	} catch (InvalidArgumentException | RuntimeException $e) {
+		$returnArr = array('ResponseCode' => '200', 'Result' => 'false', 'title' => 'Could not add event', 'message' => $e->getMessage(), 'action' => '');
+	}
 }
 
 else if($_POST['type'] == 'edit_event')
