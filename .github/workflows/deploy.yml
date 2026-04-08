@@ -31,8 +31,7 @@ jobs:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
 
-      # Port must be a bare integer (no spaces/newlines). Secrets often get pasted with
-      # trailing spaces and break appleboy/ssh-action. Use 22 here; change if SSH is nonstandard.
+      # appleboy: port must be integer; command_timeout avoids long git fetch dying early.
       - name: Deploy over SSH (git pull on server)
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -40,12 +39,15 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
+          command_timeout: 15m
           script_stop: true
           script: |
             set -euo pipefail
 
             APP_DIR="${{ secrets.VPS_APP_DIR }}"
+            APP_DIR="$(printf '%s' "$APP_DIR" | tr -d '\r\n')"
             BRANCH="master"
+            WEB_USER="www-data"
 
             if [ -z "$APP_DIR" ]; then
               echo "VPS_APP_DIR secret is required (absolute path to the git clone, e.g. /var/www/awraevent)"
@@ -60,27 +62,44 @@ jobs:
             fi
 
             cd "$APP_DIR"
+            echo "==> deploy: $(pwd) as $(whoami)"
 
-            # Make sure origin exists and points to GitHub
-            git remote -v
-
-            # Deploy exact remote state
-            git fetch --prune origin
-            git reset --hard "origin/${BRANCH}"
-
-            # Optional: composer install (only if a composer.json exists at project root)
-            if [ -f composer.json ]; then
-              if command -v composer >/dev/null 2>&1; then
-                composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
+            # PHP-FPM owns images/ after uploads → git cannot unlink during reset --hard.
+            # Passwordless sudo for chown helps: deploy ALL=(ALL) NOPASSWD: /bin/chown
+            if [ -d images ]; then
+              if sudo -n chown -R "$(whoami):$(whoami)" images 2>/dev/null; then
+                echo "==> reclaimed images/ (sudo chown)"
+              elif chown -R "$(whoami):$(whoami)" images 2>/dev/null; then
+                echo "==> reclaimed images/ (no sudo)"
               else
-                echo "composer.json found but composer not installed on server; skipping."
+                echo "==> WARN: could not chown images/ — if reset fails, run on VPS: sudo chown -R USER:USER $APP_DIR/images"
               fi
             fi
 
-            # Optional: reload PHP-FPM if available (non-fatal)
+            echo "==> git fetch / reset"
+            git remote -v
+            git fetch --prune origin
+            git reset --hard "origin/${BRANCH}"
+
+            mkdir -p images/event images/category images/gallery images/sponsore images/cover images/website
+            if sudo -n chown -R "${WEB_USER}:${WEB_USER}" images 2>/dev/null; then
+              echo "==> images/ -> ${WEB_USER}"
+              sudo chmod -R ug+rwX images 2>/dev/null || echo "==> WARN: sudo chmod skipped (OK if chown is enough)"
+            else
+              chmod -R g+rwX images 2>/dev/null || chmod -R u+rwX images 2>/dev/null || true
+            fi
+
+            if [ -f composer.json ] && command -v composer >/dev/null 2>&1; then
+              echo "==> composer (best effort)"
+              composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader || echo "==> WARN: composer failed; continuing"
+            elif [ -f composer.json ]; then
+              echo "==> composer.json present; composer not in PATH — skip"
+            fi
+
             if command -v systemctl >/dev/null 2>&1; then
               systemctl reload php8.2-fpm 2>/dev/null || true
               systemctl reload php8.1-fpm 2>/dev/null || true
               systemctl reload php8.0-fpm 2>/dev/null || true
             fi
 
+            echo "==> deploy OK"
