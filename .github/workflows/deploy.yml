@@ -31,16 +31,15 @@ jobs:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
 
-      # appleboy: port must be integer; command_timeout avoids long git fetch dying early.
-      # script_stop MUST be false: when true, drone-ssh runs each line separately and exits
-      # after any non-zero (e.g. sudo -n chown failing before elif), which breaks if/elif/fi.
+      # script_stop MUST be false: drone-ssh splits on newlines and exits after any non-zero
+      # line, which breaks multiline if/elif and aborts before elif when sudo -n fails.
       - name: Deploy over SSH (git pull on server)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: 22
+          port: ${{ secrets.VPS_SSH_PORT != '' && fromJSON(secrets.VPS_SSH_PORT) || 22 }}
           command_timeout: 15m
           script_stop: false
           script: |
@@ -66,16 +65,19 @@ jobs:
             cd "$APP_DIR"
             echo "==> deploy: $(pwd) as $(whoami)"
 
-            # PHP-FPM owns images/ after uploads → git cannot unlink during reset --hard.
-            # Passwordless sudo for chown helps: deploy ALL=(ALL) NOPASSWD: /bin/chown
-            if [ -d images ]; then
-              if sudo -n chown -R "$(whoami):$(whoami)" images 2>/dev/null; then
-                echo "==> reclaimed images/ (sudo chown)"
-              elif chown -R "$(whoami):$(whoami)" images 2>/dev/null; then
-                echo "==> reclaimed images/ (no sudo)"
-              else
-                echo "==> WARN: could not chown images/ — if reset fails, run on VPS: sudo chown -R USER:USER $APP_DIR/images"
-              fi
+            # PHP-FPM often owns files under images/ (and sometimes .git objects). Without
+            # reclaiming ownership, git reset --hard fails with "unable to unlink: Permission denied".
+            # Requires passwordless sudo for chown on the VPS, e.g. in sudoers:
+            #   deployuser ALL=(ALL) NOPASSWD: /bin/chown
+            if sudo -n chown -R "$(whoami):$(whoami)" "$APP_DIR" 2>/dev/null; then
+              echo "==> reclaimed app dir (sudo chown)"
+            elif chown -R "$(whoami):$(whoami)" "$APP_DIR" 2>/dev/null; then
+              echo "==> reclaimed app dir (no sudo)"
+            else
+              echo "ERROR: cannot chown $APP_DIR — git reset will fail on www-data-owned uploads."
+              echo "On the VPS run once (replace USER): sudo chown -R USER:USER $APP_DIR"
+              echo "Then add NOPASSWD for /bin/chown for the deploy user, or run deploy as the file owner."
+              exit 1
             fi
 
             echo "==> git fetch / reset"
@@ -86,7 +88,7 @@ jobs:
             mkdir -p images/event images/category images/gallery images/sponsore images/cover images/website
             if sudo -n chown -R "${WEB_USER}:${WEB_USER}" images 2>/dev/null; then
               echo "==> images/ -> ${WEB_USER}"
-              sudo chmod -R ug+rwX images 2>/dev/null || echo "==> WARN: sudo chmod skipped (OK if chown is enough)"
+              sudo chmod -R ug+rwX images 2>/dev/null || echo "==> WARN: sudo chmod skipped"
             else
               chmod -R g+rwX images 2>/dev/null || chmod -R u+rwX images 2>/dev/null || true
             fi
