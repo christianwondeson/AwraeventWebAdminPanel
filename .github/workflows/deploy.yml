@@ -32,6 +32,8 @@ jobs:
           VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
 
       # appleboy: port must be integer; command_timeout avoids long git fetch dying early.
+      # script_stop MUST be false: when true, drone-ssh runs each line separately and exits
+      # after any non-zero (e.g. sudo -n chown failing before elif), which breaks if/elif/fi.
       - name: Deploy over SSH (git pull on server)
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -40,7 +42,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           command_timeout: 15m
-          script_stop: true
+          script_stop: false
           script: |
             set -euo pipefail
 
