@@ -17,30 +17,17 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Validate required secrets
-        shell: bash
-        run: |
-          set -euo pipefail
-          : "${VPS_HOST:?Missing secret VPS_HOST}"
-          : "${VPS_USER:?Missing secret VPS_USER}"
-          : "${VPS_SSH_KEY:?Missing secret VPS_SSH_KEY}"
-          : "${VPS_APP_DIR:?Missing secret VPS_APP_DIR}"
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
-
-      # script_stop MUST be false: drone-ssh splits on newlines and exits after any non-zero
-      # line, which breaks multiline if/elif and aborts before elif when sudo -n fails.
       - name: Deploy over SSH (git pull on server)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          # If VPS_SSH_PORT is unset, use 22. If set, value must be a JSON number (e.g. 2222).
           port: ${{ secrets.VPS_SSH_PORT != '' && fromJSON(secrets.VPS_SSH_PORT) || 22 }}
           command_timeout: 15m
+          # Must be false: with true, drone-ssh runs one line at a time and exits on any
+          # non-zero between lines — that breaks multiline if/fi (e.g. composer.json block).
           script_stop: false
           script: |
             set -euo pipefail
@@ -48,62 +35,46 @@ jobs:
             APP_DIR="${{ secrets.VPS_APP_DIR }}"
             APP_DIR="$(printf '%s' "$APP_DIR" | tr -d '\r\n')"
             BRANCH="master"
-            WEB_USER="www-data"
 
             if [ -z "$APP_DIR" ]; then
-              echo "VPS_APP_DIR secret is required (absolute path to the git clone, e.g. /var/www/awraevent)"
+              echo "VPS_APP_DIR secret is required (e.g. /var/www/awraevents)"
               exit 1
             fi
 
             if [ ! -d "$APP_DIR" ]; then
               echo "VPS_APP_DIR is not a directory: $APP_DIR"
-              echo "Listing /var/www (set VPS_APP_DIR to the folder that contains .git):"
-              ls -la /var/www 2>/dev/null || true
               exit 1
             fi
 
             cd "$APP_DIR"
-            echo "==> deploy: $(pwd) as $(whoami)"
 
-            # PHP-FPM often owns files under images/ (and sometimes .git objects). Without
-            # reclaiming ownership, git reset --hard fails with "unable to unlink: Permission denied".
-            # Requires passwordless sudo for chown on the VPS, e.g. in sudoers:
-            #   deployuser ALL=(ALL) NOPASSWD: /bin/chown
-            if sudo -n chown -R "$(whoami):$(whoami)" "$APP_DIR" 2>/dev/null; then
-              echo "==> reclaimed app dir (sudo chown)"
-            elif chown -R "$(whoami):$(whoami)" "$APP_DIR" 2>/dev/null; then
-              echo "==> reclaimed app dir (no sudo)"
-            else
-              echo "ERROR: cannot chown $APP_DIR — git reset will fail on www-data-owned uploads."
-              echo "On the VPS run once (replace USER): sudo chown -R USER:USER $APP_DIR"
-              echo "Then add NOPASSWD for /bin/chown for the deploy user, or run deploy as the file owner."
-              exit 1
-            fi
+            # www-data-owned files under images/ (and similar) break git reset --hard unless
+            # the deploy user can reclaim the tree first (passwordless sudo chown on the VPS helps).
+            sudo -n chown -R "$(whoami):$(whoami)" "$APP_DIR" 2>/dev/null || chown -R "$(whoami):$(whoami)" "$APP_DIR" 2>/dev/null || true
 
-            echo "==> git fetch / reset"
+            # Make sure origin exists and points to GitHub
             git remote -v
+
+            # Deploy exact remote state
             git fetch --prune origin
             git reset --hard "origin/${BRANCH}"
 
             mkdir -p images/event images/category images/gallery images/sponsore images/cover images/website
-            if sudo -n chown -R "${WEB_USER}:${WEB_USER}" images 2>/dev/null; then
-              echo "==> images/ -> ${WEB_USER}"
-              sudo chmod -R ug+rwX images 2>/dev/null || echo "==> WARN: sudo chmod skipped"
-            else
-              chmod -R g+rwX images 2>/dev/null || chmod -R u+rwX images 2>/dev/null || true
+            sudo -n chown -R www-data:www-data images 2>/dev/null || true
+            sudo chmod -R ug+rwX images 2>/dev/null || chmod -R ug+rwX images 2>/dev/null || true
+
+            # Optional: composer install (only if a composer.json exists at project root)
+            if [ -f composer.json ]; then
+              if command -v composer >/dev/null 2>&1; then
+                composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
+              else
+                echo "composer.json found but composer not installed on server; skipping."
+              fi
             fi
 
-            if [ -f composer.json ] && command -v composer >/dev/null 2>&1; then
-              echo "==> composer (best effort)"
-              composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader || echo "==> WARN: composer failed; continuing"
-            elif [ -f composer.json ]; then
-              echo "==> composer.json present; composer not in PATH — skip"
-            fi
-
+            # Optional: reload PHP-FPM if available (non-fatal)
             if command -v systemctl >/dev/null 2>&1; then
               systemctl reload php8.2-fpm 2>/dev/null || true
               systemctl reload php8.1-fpm 2>/dev/null || true
               systemctl reload php8.0-fpm 2>/dev/null || true
             fi
-
-            echo "==> deploy OK"

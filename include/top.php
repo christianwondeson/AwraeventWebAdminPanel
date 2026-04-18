@@ -61,10 +61,8 @@ require_once __DIR__ . '/eventmania.php';
             Nav header start
         ***********************************-->
         <div class="nav-header">
-            <a href="#" class="brand-logo">
+            <a href="#" class="brand-logo" aria-label="<?php echo htmlspecialchars((string) ($set['webname'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                <img class="logo-abbr" src="<?php echo $set['weblogo'];?>" alt="" width="70px">
-				<div class="brand-title" style="font-size:18px;"><?php echo $set['webname'];?></div> 
-				
             </a>
             <div class="nav-control">
                 <div class="hamburger">

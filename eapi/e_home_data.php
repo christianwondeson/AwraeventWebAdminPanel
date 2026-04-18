@@ -1,13 +1,19 @@
-<?php 
+<?php
 require dirname( dirname(__FILE__) ).'/include/eventconfig.php';
 require_once dirname( dirname(__FILE__) ).'/include/brand.php';
-header('Content-type: text/json');
+header('Content-type: text/json; charset=utf-8');
+
+/** Empty sponsor row when an event has no tbl_sponsore rows (avoids PHP 8+ undefined $s[0] breaking JSON for Flutter). */
+function awraevent_eapi_empty_sponsore(): array {
+	return array('sponsore_id' => '', 'sponsore_img' => '', 'sponsore_title' => '');
+}
+
 $data = json_decode(file_get_contents('php://input'), true);
-$uid = $data['uid'];
-$lats = $data['lats'];
-$longs = $data['longs'];
-if($uid == '' or $longs == '' or $lats == '')
-{
+$uid = is_array($data) && array_key_exists('uid', $data) ? (int) $data['uid'] : 0;
+$lats = is_array($data) && isset($data['lats']) ? trim((string) $data['lats']) : '';
+$longs = is_array($data) && isset($data['longs']) ? trim((string) $data['longs']) : '';
+// Do not treat uid 0 as "empty" (0 == '' is true in PHP); only lat/long are required for listings.
+if (!is_array($data) || $lats === '' || $longs === '') {
 	$returnArr = array("ResponseCode"=>"401","Result"=>"false","ResponseMsg"=>"Something Went wrong  try again !");
 }
 else 
@@ -62,13 +68,13 @@ while($row = $spon->fetch_assoc())
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
-$nav['sponsore_list'] = $s[0];
+$nav['sponsore_list'] = isset($s[0]) ? $s[0] : awraevent_eapi_empty_sponsore();
 $ulist = $event->query("SELECT uid,eid FROM `tbl_ticket` WHERE `eid` = ".$ev['id']." GROUP BY uid");
 $member = array();
 while($rp = $ulist->fetch_assoc())
 {
 	$getpic = $event->query("select * from tbl_user where id=".$rp['uid']."")->fetch_assoc();
-	if($getpic['pro_pic'] == '')
+	if (!is_array($getpic) || ($getpic['pro_pic'] ?? '') === '')
 	{
 	}
 	else 
@@ -78,7 +84,7 @@ while($rp = $ulist->fetch_assoc())
 }
 $nav['member_list'] = $member;
 $ticket = $event->query("SELECT sum(`ticket_book`) as books FROM `tbl_type_price` WHERE eid=".$ev['id']."")->fetch_assoc();
-$nav['total_member_list'] = $ticket['books'];
+$nav['total_member_list'] = (int) (is_array($ticket) ? ($ticket['books'] ?? 0) : 0);
 $v[] = $nav;
 	}
 	}
@@ -103,13 +109,13 @@ while($row = $spon->fetch_assoc())
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
-$nav['sponsore_list'] = $s[0];
+$nav['sponsore_list'] = isset($s[0]) ? $s[0] : awraevent_eapi_empty_sponsore();
 $ulist = $event->query("SELECT uid,eid FROM `tbl_ticket` WHERE `eid` = ".$ev['id']." GROUP BY uid");
 $member = array();
 while($rp = $ulist->fetch_assoc())
 {
 	$getpic = $event->query("select * from tbl_user where id=".$rp['uid']."")->fetch_assoc();
-	if($getpic['pro_pic'] == '')
+	if (!is_array($getpic) || ($getpic['pro_pic'] ?? '') === '')
 	{
 	}
 	else 
@@ -119,7 +125,7 @@ while($rp = $ulist->fetch_assoc())
 }
 $nav['member_list'] = $member;
 $ticket = $event->query("SELECT sum(`ticket_book`) as books FROM `tbl_type_price` WHERE eid=".$ev['id']."")->fetch_assoc();
-$nav['total_member_list'] = $ticket['books'];
+$nav['total_member_list'] = (int) (is_array($ticket) ? ($ticket['books'] ?? 0) : 0);
 $v[] = $nav;
 	}
 }
@@ -157,14 +163,14 @@ while($row = $spon->fetch_assoc())
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
-$navc['sponsore_list'] = $s[0];
+$navc['sponsore_list'] = isset($s[0]) ? $s[0] : awraevent_eapi_empty_sponsore();
 
 $ulist = $event->query("SELECT uid,eid FROM `tbl_ticket` WHERE `eid` = ".$evc['id']." GROUP BY uid");
 $member = array();
 while($rp = $ulist->fetch_assoc())
 {
 	$getpic = $event->query("select * from tbl_user where id=".$rp['uid']."")->fetch_assoc();
-	if($getpic['pro_pic'] == '')
+	if (!is_array($getpic) || ($getpic['pro_pic'] ?? '') === '')
 	{
 	}
 	else 
@@ -174,7 +180,7 @@ while($rp = $ulist->fetch_assoc())
 }
 $navc['member_list'] = $member;
 $ticket = $event->query("SELECT sum(`ticket_book`) as books FROM `tbl_type_price` WHERE eid=".$evc['id']."")->fetch_assoc();
-$navc['total_member_list'] = $ticket['books'];
+$navc['total_member_list'] = (int) (is_array($ticket) ? ($ticket['books'] ?? 0) : 0);
 	$sec[] = $navc;
 	}
 	}
@@ -198,14 +204,14 @@ while($row = $spon->fetch_assoc())
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
-$navc['sponsore_list'] = $s[0];
+$navc['sponsore_list'] = isset($s[0]) ? $s[0] : awraevent_eapi_empty_sponsore();
 
 $ulist = $event->query("SELECT uid,eid FROM `tbl_ticket` WHERE `eid` = ".$evc['id']." GROUP BY uid");
 $member = array();
 while($rp = $ulist->fetch_assoc())
 {
 	$getpic = $event->query("select * from tbl_user where id=".$rp['uid']."")->fetch_assoc();
-	if($getpic['pro_pic'] == '')
+	if (!is_array($getpic) || ($getpic['pro_pic'] ?? '') === '')
 	{
 	}
 	else 
@@ -215,7 +221,7 @@ while($rp = $ulist->fetch_assoc())
 }
 $navc['member_list'] = $member;
 $ticket = $event->query("SELECT sum(`ticket_book`) as books FROM `tbl_type_price` WHERE eid=".$evc['id']."")->fetch_assoc();
-$navc['total_member_list'] = $ticket['books'];
+$navc['total_member_list'] = (int) (is_array($ticket) ? ($ticket['books'] ?? 0) : 0);
 	$sec[] = $navc;
 	}
 }
@@ -253,14 +259,14 @@ while($row = $spon->fetch_assoc())
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
-$navs['sponsore_list'] = $s[0];
+$navs['sponsore_list'] = isset($s[0]) ? $s[0] : awraevent_eapi_empty_sponsore();
 
 $ulist = $event->query("SELECT uid,eid FROM `tbl_ticket` WHERE `eid` = ".$evs['id']." GROUP BY uid");
 $member = array();
 while($rp = $ulist->fetch_assoc())
 {
 	$getpic = $event->query("select * from tbl_user where id=".$rp['uid']."")->fetch_assoc();
-	if($getpic['pro_pic'] == '')
+	if (!is_array($getpic) || ($getpic['pro_pic'] ?? '') === '')
 	{
 	}
 	else 
@@ -270,7 +276,7 @@ while($rp = $ulist->fetch_assoc())
 }
 $navs['member_list'] = $member;
 $ticket = $event->query("SELECT sum(`ticket_book`) as books FROM `tbl_type_price` WHERE eid=".$evs['id']."")->fetch_assoc();
-$navs['total_member_list'] = $ticket['books'];
+$navs['total_member_list'] = (int) (is_array($ticket) ? ($ticket['books'] ?? 0) : 0);
 	$d[] = $navs;
 	}
 	}
@@ -295,14 +301,14 @@ while($row = $spon->fetch_assoc())
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
-$navs['sponsore_list'] = $s[0];
+$navs['sponsore_list'] = isset($s[0]) ? $s[0] : awraevent_eapi_empty_sponsore();
 
 $ulist = $event->query("SELECT uid,eid FROM `tbl_ticket` WHERE `eid` = ".$evs['id']." GROUP BY uid");
 $member = array();
 while($rp = $ulist->fetch_assoc())
 {
 	$getpic = $event->query("select * from tbl_user where id=".$rp['uid']."")->fetch_assoc();
-	if($getpic['pro_pic'] == '')
+	if (!is_array($getpic) || ($getpic['pro_pic'] ?? '') === '')
 	{
 	}
 	else 
@@ -312,7 +318,7 @@ while($rp = $ulist->fetch_assoc())
 }
 $navs['member_list'] = $member;
 $ticket = $event->query("SELECT sum(`ticket_book`) as books FROM `tbl_type_price` WHERE eid=".$evs['id']."")->fetch_assoc();
-$navs['total_member_list'] = $ticket['books'];
+$navs['total_member_list'] = (int) (is_array($ticket) ? ($ticket['books'] ?? 0) : 0);
 	$d[] = $navs;
 	}
 }
@@ -349,14 +355,14 @@ while($row = $spon->fetch_assoc())
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
-$na['sponsore_list'] = $s[0];
+$na['sponsore_list'] = isset($s[0]) ? $s[0] : awraevent_eapi_empty_sponsore();
 
 $ulist = $event->query("SELECT uid,eid FROM `tbl_ticket` WHERE `eid` = ".$e['id']." GROUP BY uid");
 $member = array();
 while($rp = $ulist->fetch_assoc())
 {
 	$getpic = $event->query("select * from tbl_user where id=".$rp['uid']."")->fetch_assoc();
-	if($getpic['pro_pic'] == '')
+	if (!is_array($getpic) || ($getpic['pro_pic'] ?? '') === '')
 	{
 	}
 	else 
@@ -366,7 +372,7 @@ while($rp = $ulist->fetch_assoc())
 }
 $na['member_list'] = $member;
 $ticket = $event->query("SELECT sum(`ticket_book`) as books FROM `tbl_type_price` WHERE eid=".$e['id']."")->fetch_assoc();
-$na['total_member_list'] = $ticket['books'];
+$na['total_member_list'] = (int) (is_array($ticket) ? ($ticket['books'] ?? 0) : 0);
 	$pop[] = $na;
 	}
 	}
@@ -390,14 +396,14 @@ while($row = $spon->fetch_assoc())
 	$sponsore['sponsore_title'] = $row['title'];
 	$s[] = $sponsore;
 }
-$na['sponsore_list'] = $s[0];
+$na['sponsore_list'] = isset($s[0]) ? $s[0] : awraevent_eapi_empty_sponsore();
 
 $ulist = $event->query("SELECT uid,eid FROM `tbl_ticket` WHERE `eid` = ".$e['id']." GROUP BY uid");
 $member = array();
 while($rp = $ulist->fetch_assoc())
 {
 	$getpic = $event->query("select * from tbl_user where id=".$rp['uid']."")->fetch_assoc();
-	if($getpic['pro_pic'] == '')
+	if (!is_array($getpic) || ($getpic['pro_pic'] ?? '') === '')
 	{
 	}
 	else 
@@ -407,19 +413,16 @@ while($rp = $ulist->fetch_assoc())
 }
 $na['member_list'] = $member;
 $ticket = $event->query("SELECT sum(`ticket_book`) as books FROM `tbl_type_price` WHERE eid=".$e['id']."")->fetch_assoc();
-$na['total_member_list'] = $ticket['books'];
+$na['total_member_list'] = (int) (is_array($ticket) ? ($ticket['books'] ?? 0) : 0);
 	$pop[] = $na;
 	}
 }
 
 $tbwallet = $event->query("select * from tbl_user where id=".$uid."")->fetch_assoc();
-if($uid == 0)
-{
+if ($uid === 0 || !is_array($tbwallet)) {
 	$wallet = 0;
-}
-else 
-{
-	$wallet = $tbwallet['wallet'];
+} else {
+	$wallet = (int) ($tbwallet['wallet'] ?? 0);
 }
 
 $pols = array();
