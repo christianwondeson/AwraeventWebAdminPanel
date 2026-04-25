@@ -4,15 +4,43 @@ require_once dirname(__DIR__) . '/include/afromessage_sms.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
+function awraevent_msg_otp_json_out(array $payload): void {
+  $flags = JSON_UNESCAPED_UNICODE;
+  if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+    $flags |= JSON_INVALID_UTF8_SUBSTITUTE;
+  }
+  $j = json_encode($payload, $flags);
+  if ($j === false) {
+    $j = json_encode([
+      'ResponseCode' => '500',
+      'Result' => 'false',
+      'ResponseMsg' => 'JSON encode failed: ' . json_last_error_msg(),
+    ], JSON_UNESCAPED_UNICODE);
+    if ($j === false) {
+      $j = '{"ResponseCode":"500","Result":"false","ResponseMsg":"internal_error"}';
+    }
+  }
+  echo $j;
+}
+
 $input = json_decode(file_get_contents('php://input'), true);
 $mobile = is_array($input) ? trim((string) ($input['mobile'] ?? '')) : '';
 
 if ($mobile === '') {
-  echo json_encode([
+  awraevent_msg_otp_json_out([
     'ResponseCode' => '401',
     'Result' => 'false',
     'ResponseMsg' => 'Something Went Wrong!',
-  ], JSON_UNESCAPED_UNICODE);
+  ]);
+  exit;
+}
+
+if (!function_exists('curl_init')) {
+  awraevent_msg_otp_json_out([
+    'ResponseCode' => '500',
+    'Result' => 'false',
+    'ResponseMsg' => 'PHP cURL is not enabled on this server. Install php-curl (e.g. sudo apt install php8.2-curl) and restart php-fpm, then retry.',
+  ]);
   exit;
 }
 
@@ -21,11 +49,11 @@ $smsType = (string) ($set['sms_type'] ?? '');
 if (awraevent_sms_type_is_afro($smsType)) {
   $token = awraevent_afro_api_token($set);
   if ($token === '') {
-    echo json_encode([
+    awraevent_msg_otp_json_out([
       'ResponseCode' => '500',
       'Result' => 'false',
       'ResponseMsg' => 'AfroMessage: set AFROMESSAGE_API_TOKEN in the server environment or put the API token in Auth Key (Settings) when using AfroMessage.',
-    ], JSON_UNESCAPED_UNICODE);
+    ]);
     exit;
   }
 
@@ -36,11 +64,11 @@ if (awraevent_sms_type_is_afro($smsType)) {
 
   if (!$out['ok']) {
     $msg = $out['message'] ?? 'Could not send SMS';
-    echo json_encode([
+    awraevent_msg_otp_json_out([
       'ResponseCode' => '401',
       'Result' => 'false',
       'ResponseMsg' => $msg,
-    ], JSON_UNESCAPED_UNICODE);
+    ]);
     exit;
   }
 
@@ -58,7 +86,7 @@ if (awraevent_sms_type_is_afro($smsType)) {
     $returnArr['otp'] = $out['code'];
   }
 
-  echo json_encode($returnArr, JSON_UNESCAPED_UNICODE);
+  awraevent_msg_otp_json_out($returnArr);
   exit;
 }
 
@@ -82,4 +110,4 @@ $returnArr = array(
   'ResponseMsg' => 'OTP sent successfully!!',
   'otp' => $otp,
 );
-echo json_encode($returnArr, JSON_UNESCAPED_UNICODE);
+awraevent_msg_otp_json_out($returnArr);

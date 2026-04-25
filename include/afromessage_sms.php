@@ -62,6 +62,13 @@ if (!function_exists('awraevent_afro_http_get_json')) {
    * @return array{ok:bool,http_code:int,body?:array,raw?:string,error?:string}
    */
   function awraevent_afro_http_get_json(string $url, string $bearer): array {
+    if (!function_exists('curl_init')) {
+      return [
+        'ok' => false,
+        'http_code' => 0,
+        'error' => 'PHP cURL is not enabled. Install php-curl for your PHP version (e.g. sudo apt install php8.2-curl) and restart php-fpm.',
+      ];
+    }
     $ch = curl_init($url);
     curl_setopt_array($ch, [
       CURLOPT_RETURNTRANSFER => true,
