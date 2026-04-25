@@ -47,10 +47,23 @@ jobs:
             fi
 
             cd "$APP_DIR"
+            U="$(whoami)"
+            UG="${U}:${U}"
 
-            # www-data-owned files under images/ (and similar) break git reset --hard unless
-            # the deploy user can reclaim the tree first (passwordless sudo chown on the VPS helps).
-            sudo -n chown -R "$(whoami):$(whoami)" "$APP_DIR" 2>/dev/null || chown -R "$(whoami):$(whoami)" "$APP_DIR" 2>/dev/null || true
+            # PHP (www-data) often owns files under images/. If chown does not run successfully here,
+            # `git reset --hard` will fail with "unable to unlink: Permission denied".
+            # Do NOT use `|| true` after chown — that hides the failure and breaks the next step.
+            if sudo -n chown -R "$UG" "$APP_DIR" 2>/dev/null; then
+              echo "==> reclaimed $APP_DIR (sudo chown)"
+            elif chown -R "$UG" "$APP_DIR" 2>/dev/null; then
+              echo "==> reclaimed $APP_DIR (chown without sudo)"
+            else
+              echo "==> ERROR: could not chown $APP_DIR to $UG. Git will not be able to replace files owned by www-data."
+              echo "==> On the VPS run once: sudo chown -R $UG $APP_DIR"
+              echo "==> Then allow passwordless chown for deploy (example): echo '$U ALL=(ALL) NOPASSWD: /bin/chown' | sudo tee /etc/sudoers.d/$U-deploy"
+              echo "==> Or: sudo visudo   # same line in sudoers for user $U"
+              exit 1
+            fi
 
             # Make sure origin exists and points to GitHub
             git remote -v

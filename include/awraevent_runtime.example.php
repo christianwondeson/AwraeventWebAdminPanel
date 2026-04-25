@@ -30,3 +30,9 @@ putenv('AWRAEVENT_SKIP_ENVATO_SCRIPT=1');
 // Comma-separated tbl_payment_list.id values. Omit or leave empty = all published methods.
 // Addis Ababa / international card & wallet: usually PayPal (1) + Stripe (2) — confirm IDs in Payment Management.
 // putenv('AWRAEVENT_PAYMENT_GATEWAY_IDS=1,2');
+
+// AfroMessage (Settings → SMS type = AfroMessage). Prefer token in env, not only in the database.
+putenv('AFROMESSAGE_API_TOKEN=your_bearer_token');
+// putenv('AFROMESSAGE_FROM='); // optional identifier / short code id
+// putenv('AFROMESSAGE_SENDER='); // optional verified sender name
+// putenv('AFROMESSAGE_RETURN_OTP=0'); // optional: do not return otp in msg_otp.php JSON

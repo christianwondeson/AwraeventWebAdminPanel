@@ -116,10 +116,12 @@ include 'include/sidebar.php';
                                            <select class="form-control" name="sms_type">
 										   <option value="">select sms type</option>
 										   <option value="Msg91" <?php if($set['sms_type'] == 'Msg91'){echo 'selected';}?>>Msg91</option>
+										   <option value="AfroMessage" <?php if(stripos((string)($set['sms_type'] ?? ''), 'afro') !== false){echo 'selected';}?>>AfroMessage (OTP / 2FA)</option>
 										   <option value="Twilio" <?php if($set['sms_type'] == 'Twilio'){echo 'selected';}?>>Twilio</option>
 										  
 										   </select>
                                         </div>
+                                        <p class="text-muted small col-12">AfroMessage: store your API token in <strong>Msg91 Auth Key</strong> or set <code>AFROMESSAGE_API_TOKEN</code> in PHP. Optional identifier (short code id): <strong>Msg91 Otp Template Id</strong> or <code>AFROMESSAGE_FROM</code>. Sender: <code>AFROMESSAGE_SENDER</code>. To hide the OTP in API responses: <code>AFROMESSAGE_RETURN_OTP=0</code>.</p>
 										
 										<div class="form-group mb-3 col-12">
 										<h5 class="h5_set"><i class="fas fa-sms"></i> Msg91 Sms Configurations</h5>
