@@ -121,7 +121,7 @@ include 'include/sidebar.php';
 										  
 										   </select>
                                         </div>
-                                        <p class="text-muted small col-12">AfroMessage: store your API token in <strong>Msg91 Auth Key</strong> or set <code>AFROMESSAGE_API_TOKEN</code> in PHP. Optional identifier (short code id): <strong>Msg91 Otp Template Id</strong> or <code>AFROMESSAGE_FROM</code>. Sender: <code>AFROMESSAGE_SENDER</code>. To hide the OTP in API responses: <code>AFROMESSAGE_RETURN_OTP=0</code>.</p>
+                                        <p class="text-muted small col-12">AfroMessage: API token in <strong>Msg91 Auth Key</strong> or <code>AFROMESSAGE_API_TOKEN</code>. Leave <strong>Msg91 Otp Template Id</strong> empty unless it is your Afro short-code identifier (a numeric Msg91 template id there causes Afro &quot;Invalid identifier&quot; errors). Optional: <code>AFROMESSAGE_FROM</code>, <code>AFROMESSAGE_SENDER</code>, SMS wording <code>AFROMESSAGE_OTP_PREFIX</code> / <code>AFROMESSAGE_OTP_SUFFIX</code>, <code>AFROMESSAGE_RETURN_OTP=0</code>.</p>
 										
 										<div class="form-group mb-3 col-12">
 										<h5 class="h5_set"><i class="fas fa-sms"></i> Msg91 Sms Configurations</h5>

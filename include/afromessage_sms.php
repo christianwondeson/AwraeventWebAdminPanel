@@ -30,20 +30,32 @@ if (!function_exists('awraevent_afro_api_token')) {
   /** @param array $set tbl_setting row */
   function awraevent_afro_api_token(array $set): string {
     $env = getenv('AFROMESSAGE_API_TOKEN');
-    if (is_string($env) && $env !== '') {
-      return $env;
+    if (is_string($env) && trim($env) !== '') {
+      return trim($env);
     }
-    return trim((string) ($set['auth_key'] ?? ''));
+    $k = trim((string) ($set['auth_key'] ?? ''));
+    return trim($k, "\"'\t ");
   }
 }
 
 if (!function_exists('awraevent_afro_from_id')) {
+  /**
+   * Afro "from" = short-code / identifier id. tbl_setting.otp_id is reused from Msg91 and is often numeric only;
+   * sending that as `from` causes Afro 401 "Invalid identifier". Omit unless it looks like a real Afro id.
+   */
   function awraevent_afro_from_id(array $set): string {
     $env = getenv('AFROMESSAGE_FROM');
-    if (is_string($env) && $env !== '') {
-      return $env;
+    if (is_string($env) && trim($env) !== '') {
+      return trim($env);
     }
-    return trim((string) ($set['otp_id'] ?? ''));
+    $id = trim((string) ($set['otp_id'] ?? ''));
+    if ($id === '') {
+      return '';
+    }
+    if (ctype_digit($id)) {
+      return '';
+    }
+    return $id;
   }
 }
 
@@ -137,13 +149,22 @@ if (!function_exists('awraevent_afro_send_challenge')) {
     int $len = 6,
     int $ttlSeconds = 600
   ): array {
+    $pr = getenv('AFROMESSAGE_OTP_PREFIX');
+    if (!is_string($pr) || trim($pr) === '') {
+      $pr = 'Awra Event — your verification code: ';
+    } else {
+      $pr = trim($pr);
+    }
+    $ps = getenv('AFROMESSAGE_OTP_SUFFIX');
+    $ps = (is_string($ps) ? trim($ps) : '');
+
     $q = [
       'to' => $toE164,
       'len' => $len,
       't' => 0,
       'ttl' => $ttlSeconds,
-      'pr' => '',
-      'ps' => '',
+      'pr' => $pr,
+      'ps' => $ps,
       'sb' => 0,
       'sa' => 0,
     ];

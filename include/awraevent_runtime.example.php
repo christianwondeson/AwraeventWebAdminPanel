@@ -32,7 +32,9 @@ putenv('AWRAEVENT_SKIP_ENVATO_SCRIPT=1');
 // putenv('AWRAEVENT_PAYMENT_GATEWAY_IDS=1,2');
 
 // AfroMessage (Settings → SMS type = AfroMessage). Prefer token in env, not only in the database.
-putenv('AFROMESSAGE_API_TOKEN=your_bearer_token');
-// putenv('AFROMESSAGE_FROM='); // optional identifier / short code id
+// putenv('AFROMESSAGE_API_TOKEN=your_bearer_token');
+// putenv('AFROMESSAGE_FROM='); // optional identifier / short code id (omit if unsure; do not put Msg91 template id here)
 // putenv('AFROMESSAGE_SENDER='); // optional verified sender name
+// putenv('AFROMESSAGE_OTP_PREFIX=Awra Event — your verification code: '); // SMS text before the code (Afro pr=)
+// putenv('AFROMESSAGE_OTP_SUFFIX= . Do not share this code.'); // SMS text after the code (Afro ps=)
 // putenv('AFROMESSAGE_RETURN_OTP=0'); // optional: do not return otp in msg_otp.php JSON
