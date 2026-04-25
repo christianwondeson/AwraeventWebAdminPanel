@@ -40,22 +40,17 @@ if (!function_exists('awraevent_afro_api_token')) {
 
 if (!function_exists('awraevent_afro_from_id')) {
   /**
-   * Afro "from" = short-code / identifier id. tbl_setting.otp_id is reused from Msg91 and is often numeric only;
-   * sending that as `from` causes Afro 401 "Invalid identifier". Omit unless it looks like a real Afro id.
+   * Afro optional "from" = system identifier id. Use ONLY env AFROMESSAGE_FROM.
+   * Never use tbl_setting.otp_id — that field is the Msg91 template id and always breaks Afro (HTTP 401-12).
+   *
+   * @param array $set tbl_setting row (unused; kept for call-site compatibility)
    */
   function awraevent_afro_from_id(array $set): string {
     $env = getenv('AFROMESSAGE_FROM');
     if (is_string($env) && trim($env) !== '') {
       return trim($env);
     }
-    $id = trim((string) ($set['otp_id'] ?? ''));
-    if ($id === '') {
-      return '';
-    }
-    if (ctype_digit($id)) {
-      return '';
-    }
-    return $id;
+    return '';
   }
 }
 
