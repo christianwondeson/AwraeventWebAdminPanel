@@ -57,6 +57,29 @@ if (!function_exists('awraevent_afro_sender_id')) {
   }
 }
 
+if (!function_exists('awraevent_afro_error_message_from_body')) {
+  /** Human-readable message when acknowledge is not success. */
+  function awraevent_afro_error_message_from_body(?array $data): string {
+    if (!is_array($data) || !isset($data['response'])) {
+      return 'AfroMessage request failed';
+    }
+    $r = $data['response'];
+    if (is_string($r) && $r !== '') {
+      return $r;
+    }
+    if (!is_array($r)) {
+      return 'AfroMessage request failed';
+    }
+    if (!empty($r['errors']) && is_array($r['errors'])) {
+      return implode(' ', array_map('strval', $r['errors']));
+    }
+    if (isset($r['message']) && (string) $r['message'] !== '') {
+      return (string) $r['message'];
+    }
+    return 'AfroMessage request failed';
+  }
+}
+
 if (!function_exists('awraevent_afro_http_get_json')) {
   /**
    * @return array{ok:bool,http_code:int,body?:array,raw?:string,error?:string}
@@ -87,7 +110,13 @@ if (!function_exists('awraevent_afro_http_get_json')) {
     }
     $data = json_decode($raw, true);
     if (!is_array($data)) {
-      return ['ok' => false, 'http_code' => $code, 'raw' => $raw, 'error' => 'Invalid JSON from AfroMessage'];
+      $preview = is_string($raw) ? substr(preg_replace('/\s+/', ' ', $raw), 0, 200) : '';
+      return [
+        'ok' => false,
+        'http_code' => $code,
+        'raw' => $raw,
+        'error' => 'Invalid JSON from AfroMessage (HTTP ' . $code . '). Preview: ' . $preview,
+      ];
     }
     $ack = isset($data['acknowledge']) ? strtolower((string) $data['acknowledge']) : '';
     return ['ok' => $code === 200 && $ack === 'success', 'http_code' => $code, 'body' => $data, 'raw' => $raw];
@@ -129,12 +158,11 @@ if (!function_exists('awraevent_afro_send_challenge')) {
     $res = awraevent_afro_http_get_json($url, $bearer);
     if (!$res['ok']) {
       $errMsg = $res['error'] ?? 'AfroMessage request failed';
-      if (isset($res['body']['response']) && is_string($res['body']['response'])) {
-        $errMsg = $res['body']['response'];
-      } elseif (isset($res['body']['response']['message'])) {
-        $errMsg = (string) $res['body']['response']['message'];
-      } elseif (isset($res['body']) && is_array($res['body'])) {
-        $errMsg = json_encode($res['body']);
+      if (isset($res['body']) && is_array($res['body'])) {
+        $fromBody = awraevent_afro_error_message_from_body($res['body']);
+        if ($fromBody !== 'AfroMessage request failed') {
+          $errMsg = $fromBody;
+        }
       }
       return [
         'ok' => false,
@@ -174,17 +202,12 @@ if (!function_exists('awraevent_afro_verify_code')) {
         return ['ok' => true, 'message' => 'Verified', 'body' => is_array($resp) ? $resp : null];
       }
     }
-    $msg = 'Verification failed';
+    $msg = isset($res['error']) ? (string) $res['error'] : 'Verification failed';
     if (is_array($res['body'] ?? null)) {
-      if (isset($res['body']['response']) && is_string($res['body']['response'])) {
-        $msg = $res['body']['response'];
-      } elseif (isset($res['body']['response']['message'])) {
-        $msg = (string) $res['body']['response']['message'];
-      } elseif (isset($res['body']['message']) && is_string($res['body']['message'])) {
-        $msg = $res['body']['message'];
+      $fromBody = awraevent_afro_error_message_from_body($res['body']);
+      if ($fromBody !== 'AfroMessage request failed') {
+        $msg = $fromBody;
       }
-    } elseif (isset($res['error'])) {
-      $msg = (string) $res['error'];
     }
     return ['ok' => false, 'message' => $msg, 'body' => $res['body'] ?? null];
   }
