@@ -8,6 +8,29 @@ function awraevent_eapi_empty_sponsore(): array {
 	return array('sponsore_id' => '', 'sponsore_img' => '', 'sponsore_title' => '');
 }
 
+/**
+ * True when event end is at or before $nowTs. Uses strtotime (not string compare on sdate + etime),
+ * which avoids false "ended" results when etime is not strict Y-m-d H:i:s.
+ *
+ * @param array $row tbl_event row (needs sdate, etime)
+ */
+function awraevent_eapi_event_ended(array $row, int $nowTs): bool {
+	$sdate = trim((string) ($row['sdate'] ?? ''));
+	if ($sdate === '') {
+		return false;
+	}
+	$etime = trim((string) ($row['etime'] ?? ''));
+	$combined = $etime === '' ? $sdate : $sdate . ' ' . $etime;
+	$endTs = strtotime($combined);
+	if ($endTs === false) {
+		$endTs = strtotime($sdate . ' 23:59:59');
+	}
+	if ($endTs === false) {
+		return false;
+	}
+	return $endTs <= $nowTs;
+}
+
 $data = json_decode(file_get_contents('php://input'), true);
 $uid = is_array($data) && array_key_exists('uid', $data) ? (int) $data['uid'] : 0;
 $lats = is_array($data) && isset($data['lats']) ? trim((string) $data['lats']) : '';
@@ -36,7 +59,8 @@ while($row = $cato->fetch_assoc())
 }
 $timestamp = date("Y-m-d");
 $chtime = date("Y-m-d H:i:s");
-$eventlist = $event->query("select * from tbl_event where status=1 and event_status='Pending' order by sdate");
+$nowTs = (int) strtotime($chtime);
+$eventlist = $event->query("select * from tbl_event where status=1 and (event_status IS NULL OR event_status <> 'Completed') order by sdate");
 $nav = array();
 while($ev = $eventlist->fetch_assoc())
 {
@@ -131,13 +155,13 @@ $v[] = $nav;
 }
 
 
-$eventlistc = $event->query("select * from tbl_event where status=1 order by id desc limit 5");
+$eventlistc = $event->query("select * from tbl_event where status=1 order by id desc limit 50");
 $navc = array();
 while($evc = $eventlistc->fetch_assoc())
 {
 	if($evc['sdate'] <= $timestamp)
 	{
-		if($evc['sdate'].' '.$evc['etime'] <= $chtime)
+		if (awraevent_eapi_event_ended($evc, $nowTs))
 	{
 		$event->query("update tbl_event set event_status='Completed' where id=".$evc['id']."");
 		$event->query("update tbl_ticket set ticket_type='Completed' where eid=".$evc['id']." and ticket_type='Booked'");
@@ -225,6 +249,9 @@ $navc['total_member_list'] = (int) (is_array($ticket) ? ($ticket['books'] ?? 0) 
 	$sec[] = $navc;
 	}
 }
+if (count($sec) > 5) {
+	$sec = array_slice($sec, 0, 5);
+}
 
 
 $eventlists = $event->query("SELECT (((acos(sin((".$lats."*pi()/180)) * sin((`latitude`*pi()/180))+cos((".$lats."*pi()/180)) * cos((`latitude`*pi()/180)) * cos(((".$longs."-`longtitude`)*pi()/180))))*180/pi())*60*1.1515*1.609344) as distance,id,title,img,address,sdate,stime,is_booked,etime FROM tbl_event where status=1 order by distance");
@@ -233,7 +260,7 @@ while($evs = $eventlists->fetch_assoc())
 {
 	if($evs['sdate'] <= $timestamp)
 	{
-		if($evs['sdate'].' '.$evs['etime'] <= $chtime)
+		if (awraevent_eapi_event_ended($evs, $nowTs))
 	{
 		$event->query("update tbl_event set event_status='Completed' where id=".$evs['id']."");
 		$event->query("update tbl_ticket set ticket_type='Completed' where eid=".$evs['id']." and ticket_type='Booked'");
@@ -329,7 +356,7 @@ while($e = $eve->fetch_assoc())
 {
 	if($e['sdate'] <= $timestamp)
 	{
-		if($e['sdate'].' '.$e['etime'] <= $chtime)
+		if (awraevent_eapi_event_ended($e, $nowTs))
 	{
 		$event->query("update tbl_event set event_status='Completed' where id=".$e['id']."");
 		$event->query("update tbl_ticket set ticket_type='Completed' where eid=".$e['id']." and ticket_type='Booked'");
