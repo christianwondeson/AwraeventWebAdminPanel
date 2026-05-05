@@ -3,6 +3,7 @@ require dirname(__DIR__) . '/include/eventconfig.php';
 require dirname(__DIR__) . '/include/eventmania.php';
 require_once dirname(__DIR__) . '/include/brand.php';
 require_once dirname(__DIR__) . '/include/awraevent_password.php';
+require_once dirname(__DIR__) . '/include/awraevent_mobile_eapi.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -29,12 +30,23 @@ if ($data['name'] == '' || $data['mobile'] == '' || $data['password'] == '' || $
 
 $name = strip_tags((string) $data['name']);
 $email = strip_tags((string) $data['email']);
-$mobile = strip_tags((string) $data['mobile']);
 $ccode = strip_tags((string) $data['ccode']);
-$passwordHash = awraevent_password_hash((string) $data['password']);
+$passwordHash = awraevent_password_hash(trim((string) $data['password']));
 $refercode = isset($data['refercode']) ? strip_tags((string) $data['refercode']) : '';
 
-$checkmob = $event->query("SELECT 1 FROM tbl_user WHERE mobile='" . $event->real_escape_string($mobile) . "' LIMIT 1");
+$mobile = awraevent_eapi_mobile_canonical_storage($data);
+$candidates = awraevent_eapi_mobile_candidates($data);
+if ($mobile === '' || $candidates === []) {
+  echo json_encode(['ResponseCode' => '401', 'Result' => 'false', 'ResponseMsg' => 'Something Went Wrong!']);
+  exit;
+}
+$inList = [];
+foreach ($candidates as $c) {
+  $inList[] = "'" . $event->real_escape_string($c) . "'";
+}
+$inSql = implode(',', $inList);
+
+$checkmob = $event->query('SELECT 1 FROM tbl_user WHERE mobile IN (' . $inSql . ') LIMIT 1');
 
 if ($checkmob->num_rows != 0) {
   echo json_encode(['ResponseCode' => '401', 'Result' => 'false', 'ResponseMsg' => 'Mobile Number Already Used!']);
