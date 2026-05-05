@@ -30,7 +30,7 @@ include 'include/sidebar.php';
 								
 								<div class="form-group mb-3">
                                             <label>Payment Gateway Name</label>
-                                            <input type="text" class="form-control " disabled placeholder="Enter Payment Gateway Name" value="<?php echo $data['title'];?>" name="cname" required="">
+                                            <input type="text" class="form-control " readonly placeholder="Enter Payment Gateway Name" value="<?php echo htmlspecialchars((string) $data['title'], ENT_QUOTES, 'UTF-8');?>" name="cname" required="">
 											 <input type="hidden" name="type" value="edit_payment"/>
 										<input type="hidden" name="id" value="<?php echo $_GET['id'];?>"/>
                                         </div>
@@ -48,7 +48,7 @@ include 'include/sidebar.php';
                                             </div>
 											<br>
 											<br>
-											<img src="<?php echo $data['img']?>" width="100px"/>
+											<img src="<?php echo htmlspecialchars(awraevent_media_url((string) ($data['img'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>" width="100px" alt=""/>
                                         </div>
 										<div class="form-group mb-3">
                                             <label>Payment Gateway Attributes<?php if($_GET['id'] == 1){echo ' ( 1 for Live Paypal And 0 for Sendbox Paypal. )';}?></label>

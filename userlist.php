@@ -24,6 +24,7 @@ $userCount = $userRows instanceof mysqli_result ? $userRows->num_rows : 0;
                                 <span class="badge badge-primary"><?php echo (int) $userCount; ?> user(s)</span>
                             </div>
                             <div class="card-body">
+								<p class="small alert alert-info py-2 px-3 mb-3"><strong>Mobile app login</strong> uses <code>tbl_user.status</code>: value <code>1</code> = allowed, anything else = blocked (API returns a deactivated-style message after the password checks). Use <strong>Allow app login</strong> / <strong>Block app login</strong> below to change that flag.</p>
 								<?php if ($userCount === 0) { ?>
 								<div class="alert alert-light border text-center py-5">
 									<h5 class="text-dark">No app users yet</h5>
@@ -40,7 +41,7 @@ $userCount = $userRows instanceof mysqli_result ? $userRows->num_rows : 0;
                                                 <th>Email</th>
                                                 <th>Mobile</th>
                                                 <th>Join date</th>
-                                                <th>Status</th>
+                                                <th>App access</th>
                                                 <th>Referred by (code)</th>
                                                 <th>Own invite code</th>
                                                 <th>Wallet</th>
@@ -61,9 +62,15 @@ $userCount = $userRows instanceof mysqli_result ? $userRows->num_rows : 0;
 												<td><?php echo htmlspecialchars((string) ($row['ccode'] ?? '') . ' ' . (string) ($row['mobile'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
 												<td><?php echo htmlspecialchars((string) ($row['rdate'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
 												<?php if (($row['status'] ?? 0) == 1) { ?>
-                                                <td><a class="drop" href="javascript:void(0);" data-id="<?php echo (int) $row['id']; ?>" data-status="0" data-type="update_status" data-coll-type="user"><span class="badge badge-danger">Deactivate</span></a></td>
+                                                <td>
+													<span class="badge badge-success mb-1">Active — mobile app can log in</span><br>
+													<a class="drop small" href="javascript:void(0);" data-id="<?php echo (int) $row['id']; ?>" data-status="0" data-type="update_status" data-coll-type="user"><span class="badge badge-danger">Block app login</span></a>
+												</td>
 												<?php } else { ?>
-												<td><a class="drop" href="javascript:void(0);" data-id="<?php echo (int) $row['id']; ?>" data-status="1" data-type="update_status" data-coll-type="user"><span class="badge badge-success">Activate</span></a></td>
+												<td>
+													<span class="badge badge-secondary mb-1">Inactive — app login blocked</span><br>
+													<a class="drop small" href="javascript:void(0);" data-id="<?php echo (int) $row['id']; ?>" data-status="1" data-type="update_status" data-coll-type="user"><span class="badge badge-success">Allow app login</span></a>
+												</td>
 												<?php } ?>
 												<td><?php echo htmlspecialchars((string) ($row['refercode'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></td>
 												<td><?php echo htmlspecialchars((string) ($row['code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>

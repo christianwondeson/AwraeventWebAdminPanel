@@ -86,6 +86,10 @@ $h = new Eventmania();
 {
 	$returnArr = array("ResponseCode"=>"200","Result"=>"true","title"=>"User Status Change Successfully!!","message"=>"User section!","action"=>"userlist.php");
 }
+	else
+	{
+		$returnArr = array("ResponseCode"=>"200","Result"=>"false","title"=>"Status not updated","message"=>"Database update failed or no matching user id.","action"=>"userlist.php");
+	}
 	}
 	
 	else 
