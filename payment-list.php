@@ -51,7 +51,7 @@ while($row = $stmt->fetch_assoc())
                                                 <td> <?php echo $row['title']; ?></td>
 												<td style="max-width:200px;"> <?php echo $row['subtitle']; ?></td>
                                                 <td class="align-middle">
-                                                   <img src="<?php echo $row['img']; ?>" width="60" height="60"/>
+                                                   <img src="<?php echo htmlspecialchars(awraevent_media_url((string) ($row['img'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>" width="60" height="60" alt=""/>
                                                 </td>
                                                 
                                                

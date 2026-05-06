@@ -26,7 +26,7 @@ include 'include/sidebar.php';
                             </div>
                             <div class="card-body">
                                
-                                     <form method="POST" enctype="multipart/form-data">
+                                     <form method="post" enctype="multipart/form-data" id="edit-payment-form" data-admin-ajax="1">
 								
 								<div class="form-group mb-3">
                                             <label>Payment Gateway Name</label>
@@ -42,10 +42,10 @@ include 'include/sidebar.php';
 										
                                         <div class="form-group mb-3">
                                             <label>Payment Gateway Image</label>
-											<div class="custom-file">
-                                                <input type="file" name="cat_img" class="custom-file-input">
-                                               
+											<div class="mb-2">
+                                                <input type="file" name="cat_img" class="form-control" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml">
                                             </div>
+                                            <p class="small text-muted mb-0">PNG/JPG/WebP/SVG recommended. Max size depends on server <code>upload_max_filesize</code>.</p>
 											<br>
 											<br>
 											<img src="<?php echo htmlspecialchars(awraevent_media_url((string) ($data['img'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>" width="100px" alt=""/>

@@ -434,45 +434,72 @@ $h = new Eventmania();
 
 else if($_POST['type'] == 'edit_payment')
 {
-	$dname = mysqli_real_escape_string($event,$_POST['cname']);
-			$attributes = mysqli_real_escape_string($event,$_POST['p_attr']);
-			$ptitle = mysqli_real_escape_string($event,$_POST['ptitle']);
-			$okey = $_POST['status'];
-			$id = $_POST['id'];
-			$p_show = $_POST['p_show'];
-			$target_dir = dirname( dirname(__FILE__) )."/images/payment/";
-			$url = "images/payment/";
-			$temp = explode(".", $_FILES["cat_img"]["name"]);
-$newfilename = round(microtime(true)) . '.' . end($temp);
-$target_file = $target_dir . basename($newfilename);
-$url = $url . basename($newfilename);
-if($_FILES["cat_img"]["name"] != '')
-{
+	$id = (int) ($_POST['id'] ?? 0);
+	if ($id <= 0) {
+		$returnArr = array('ResponseCode'=>'200','Result'=>'false','title'=>'Invalid request','message'=>'Missing payment gateway id.','action'=>'payment-list.php');
+	} else {
+		$dname = mysqli_real_escape_string($event, (string) ($_POST['cname'] ?? ''));
+		if ($dname === '') {
+			$rowT = $event->query('SELECT title FROM tbl_payment_list WHERE id=' . $id . ' LIMIT 1')->fetch_assoc();
+			$dname = mysqli_real_escape_string($event, (string) ($rowT['title'] ?? ''));
+		}
+		$attributes = mysqli_real_escape_string($event, (string) ($_POST['p_attr'] ?? ''));
+		$ptitle = mysqli_real_escape_string($event, (string) ($_POST['ptitle'] ?? ''));
+		$okey = (string) (int) ($_POST['status'] ?? 0);
+		$p_show = (string) (int) ($_POST['p_show'] ?? 0);
 
-	move_uploaded_file($_FILES["cat_img"]["tmp_name"], $target_file);
-	$table="tbl_payment_list";
-  $field = array('title'=>$dname,'status'=>$okey,'img'=>$url,'attributes'=>$attributes,'subtitle'=>$ptitle,'p_show'=>$p_show);
-  $where = "where id=".$id."";
-$h = new Eventmania();
-	  $check = $h->eventupdateData($field,$table,$where);
-  
-	  if($check == 1)
-{
-	$returnArr = array("ResponseCode"=>"200","Result"=>"true","title"=>"Payment Gateway Update Successfully!!","message"=>"Payment Gateway section!","action"=>"payment-list.php");
-}
-}
-else 
-{
-	$table="tbl_payment_list";
-  $field = array('title'=>$dname,'status'=>$okey,'attributes'=>$attributes,'subtitle'=>$ptitle,'p_show'=>$p_show);
-  $where = "where id=".$id."";
-$h = new Eventmania();
-	  $check = $h->eventupdateData($field,$table,$where);
-	  if($check == 1)
-{
-	$returnArr = array("ResponseCode"=>"200","Result"=>"true","title"=>"payment Update Successfully!!","message"=>"payment section!","action"=>"payment-list.php");
-}
-}
+		$target_dir = dirname(__DIR__) . '/images/payment/';
+		$relBase = 'images/payment/';
+		if (!awraevent_ensure_upload_dir($target_dir)) {
+			$returnArr = array('ResponseCode'=>'200','Result'=>'false','title'=>'Upload folder missing','message'=>'Could not create or write images/payment. Fix permissions (e.g. chmod 775, correct owner for PHP-FPM).','action'=>'edit_payment.php?id=' . $id);
+		} else {
+			$file = $_FILES['cat_img'] ?? null;
+			$hasFile = is_array($file)
+				&& isset($file['name'], $file['tmp_name'], $file['error'])
+				&& (string) $file['name'] !== ''
+				&& (int) $file['error'] === UPLOAD_ERR_OK
+				&& is_uploaded_file((string) $file['tmp_name']);
+
+			$h = new Eventmania();
+			$table = 'tbl_payment_list';
+			$where = 'where id=' . $id;
+
+			if ($hasFile) {
+				$ext = awraevent_upload_ext_from_name((string) $file['name']);
+				$newfilename = (string) round(microtime(true)) . '.' . $ext;
+				$target_file = $target_dir . $newfilename;
+				$relPath = $relBase . $newfilename;
+				if (!move_uploaded_file((string) $file['tmp_name'], $target_file)) {
+					$returnArr = array('ResponseCode'=>'200','Result'=>'false','title'=>'Image save failed','message'=>'Upload was received but could not be written under images/payment/.','action'=>'edit_payment.php?id=' . $id);
+				} else {
+					$field = array('title'=>$dname,'status'=>$okey,'img'=>$relPath,'attributes'=>$attributes,'subtitle'=>$ptitle,'p_show'=>$p_show);
+					$check = $h->eventupdateData($field,$table,$where);
+					if ($check == 1) {
+						$returnArr = array('ResponseCode'=>'200','Result'=>'true','title'=>'Payment Gateway Update Successfully!!','message'=>'Logo image saved.','action'=>'payment-list.php');
+					} else {
+						$returnArr = array('ResponseCode'=>'200','Result'=>'false','title'=>'Database update failed','message'=>'File was saved but tbl_payment_list did not update.','action'=>'edit_payment.php?id=' . $id);
+					}
+				}
+			} else {
+				$err = is_array($file) && isset($file['error']) ? (int) $file['error'] : UPLOAD_ERR_NO_FILE;
+				if ($err !== UPLOAD_ERR_NO_FILE) {
+					$msg = 'Upload error code ' . $err;
+					if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE) {
+						$msg .= ' (file too large — increase upload_max_filesize and post_max_size in php.ini).';
+					}
+					$returnArr = array('ResponseCode'=>'200','Result'=>'false','title'=>'Upload failed','message'=>$msg,'action'=>'edit_payment.php?id=' . $id);
+				} else {
+					$field = array('title'=>$dname,'status'=>$okey,'attributes'=>$attributes,'subtitle'=>$ptitle,'p_show'=>$p_show);
+					$check = $h->eventupdateData($field,$table,$where);
+					if ($check == 1) {
+						$returnArr = array('ResponseCode'=>'200','Result'=>'true','title'=>'payment Update Successfully!!','message'=>'Settings saved (logo unchanged).','action'=>'payment-list.php');
+					} else {
+						$returnArr = array('ResponseCode'=>'200','Result'=>'false','title'=>'Database update failed','message'=>'Try again.','action'=>'edit_payment.php?id=' . $id);
+					}
+				}
+			}
+		}
+	}
 }
 else if($_POST['type'] == 'add_faq')
 {

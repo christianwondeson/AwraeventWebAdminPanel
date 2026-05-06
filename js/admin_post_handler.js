@@ -101,8 +101,12 @@
 		}
 	}
 
-	$(document).on('submit', '.content-body form[method="post"]', function (e) {
+	$(document).on('submit', '.content-body form', function (e) {
 		var form = e.target;
+		var method = (form.getAttribute('method') || 'get').toLowerCase();
+		if (method !== 'post') {
+			return;
+		}
 		if (form.getAttribute('data-admin-ajax') === '0') {
 			return;
 		}
